@@ -23,7 +23,7 @@ services:
     build: .
     container_name: pms_django
     restart: always
-    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+    command: gunicorn --bind 0.0.0.0:8000 root.wsgi:application
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -39,7 +39,7 @@ services:
     build: .
     container_name: pms_celery
     restart: always
-    command: celery -A config worker -l info
+    command: celery -A root worker -l info
     volumes:
       - .:/app
     env_file:

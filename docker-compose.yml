@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pms_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pms_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: pms_redis
+    restart: always
+    networks:
+      - pms_network
+
+  django:
+    build: .
+    container_name: pms_django
+    restart: always
+    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - pms_network
+
+  celery:
+    build: .
+    container_name: pms_celery
+    restart: always
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - django
+      - redis
+      - postgres
+    networks:
+      - pms_network
+
+volumes:
+  postgres_data:
+  static_volume:
+
+networks:
+  pms_network:
+    driver: bridge

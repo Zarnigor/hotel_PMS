@@ -11,7 +11,7 @@ class Room(models.Model):
         CLEANING = "cleaning", "Cleaning"
 
     room_number = models.CharField(max_length=10, unique=True)
-    room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
+    room_type_id = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
 
     class Meta:

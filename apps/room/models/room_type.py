@@ -1,5 +1,5 @@
 from django.db import models
-from apps.room.models.room_type_base import RoomTypeBase
+from apps.room.models import RoomTypeBase
 
 
 class RoomType(models.Model):

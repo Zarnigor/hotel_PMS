@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                 ('check_out_date', models.DateField()),
                 ('status', models.CharField(choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('checked_in', 'Checked in'), ('checked_out', 'Checked out'), ('cancelled', 'Cancelled')], default='pending', max_length=20)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('assigned_room_id', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='room.room')),
-                ('room_type_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='room.roomtype')),
+                ('assigned_room', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='room.room')),
+                ('room_type', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='room.roomtype')),
             ],
             options={
                 'db_table': 'reservation',

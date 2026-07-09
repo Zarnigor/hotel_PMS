@@ -1,10 +1,9 @@
 from django.db import models
-from apps.room.models import RoomTypeBase
 
 
 class RoomType(models.Model):
     room_type_base = models.ForeignKey(
-        RoomTypeBase,
+        'room.RoomTypeBase',
         on_delete=models.PROTECT,
         related_name="room_types",
     )
@@ -13,7 +12,7 @@ class RoomType(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "room_type"
+        db_table = "room_types"
 
     def __str__(self):
         return self.name

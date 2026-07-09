@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('room_number', models.CharField(max_length=10, unique=True)),
                 ('status', models.CharField(choices=[('available', 'Available'), ('occupied', 'Occupied'), ('maintenance', 'Maintenance'), ('cleaning', 'Cleaning')], default='available', max_length=20)),
-                ('room_type_id', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='room.roomtype')),
+                ('room_type', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='room.roomtype')),
             ],
             options={
                 'db_table': 'room',

@@ -1,10 +1,9 @@
 from django.db import models
-from apps.room.models import RoomType
 
 class RoomInventory(models.Model):
     date = models.DateField()
     room_type = models.ForeignKey(
-        RoomType,
+        'room.RoomType',
         on_delete=models.CASCADE,
         related_name="inventory_records",
     )
@@ -12,7 +11,7 @@ class RoomInventory(models.Model):
     booked_rooms = models.PositiveIntegerField(default=0)
 
     class Meta:
-        db_table = "room_inventory"
+        db_table = "room_inventories"
         constraints = [
             models.UniqueConstraint(
                 fields=["date", "room_type"],

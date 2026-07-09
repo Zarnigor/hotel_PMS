@@ -20,16 +20,16 @@ class RoomTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ("id", "room_number", "room_type_id", "status")
-    list_filter = ("status", "room_type_id")
+    list_display = ("id", "room_number", "room_type", "status")
+    list_filter = ("status", "room_type")
     search_fields = ("room_number",)
-    autocomplete_fields = ("room_type_id",)
+    autocomplete_fields = ("room_type",)
 
 
 
 @admin.register(RoomInventory)
 class RoomInventoryAdmin(admin.ModelAdmin):
-    list_display = ("id", "date", "room_type_id", "total_rooms", "booked_rooms", "available_rooms")
+    list_display = ("id", "date", "room_type", "total_rooms", "booked_rooms", "available_rooms")
     list_filter = ("room_type", "date")
     search_fields = ("room_type__name",)
     autocomplete_fields = ("room_type",)

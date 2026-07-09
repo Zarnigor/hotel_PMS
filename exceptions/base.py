@@ -1,7 +1,5 @@
 class BaseAppException(Exception):
-
-    """Barcha custom exception'lar uchun asosiy class"""
-
+    """Barcha custom exception'lar shu klassdan meros oladi"""
     status_code = 400
     default_message = "Xatolik yuz berdi"
     error_code = "error"

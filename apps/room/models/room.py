@@ -4,7 +4,7 @@ from apps.room.models import RoomType
 
 
 class Room(models.Model):
-    class Status:
+    class Status(models.TextChoices):
         AVAILABLE = "available", "Available"
         OCCUPIED = "occupied", "Occupied"
         MAINTENANCE = "maintenance", "Maintenance"

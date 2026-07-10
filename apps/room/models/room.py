@@ -9,13 +9,7 @@ class Room(models.Model):
         OCCUPIED = "occupied", _("Occupied")
         MAINTENANCE = "maintenance", _("Maintenance")
         CLEANING = "cleaning", _("Cleaning")
-
-    ALLOWED_TRANSITIONS = {
-        Status.AVAILABLE: {Status.OCCUPIED, Status.MAINTENANCE},
-        Status.OCCUPIED: {Status.CLEANING},
-        Status.CLEANING: {Status.AVAILABLE, Status.MAINTENANCE},
-        Status.MAINTENANCE: {Status.AVAILABLE},
-    }
+        OUT_OF_SERVICE = "out of service", _("OUT_OF_SERVICE")
 
     room_number = models.CharField(max_length=10, unique=True)
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)

@@ -10,6 +10,13 @@ class Room(models.Model):
         MAINTENANCE = "maintenance", _("Maintenance")
         CLEANING = "cleaning", _("Cleaning")
 
+    ALLOWED_TRANSITIONS = {
+        Status.AVAILABLE: {Status.OCCUPIED, Status.MAINTENANCE},
+        Status.OCCUPIED: {Status.CLEANING},
+        Status.CLEANING: {Status.AVAILABLE, Status.MAINTENANCE},
+        Status.MAINTENANCE: {Status.AVAILABLE},
+    }
+
     room_number = models.CharField(max_length=10, unique=True)
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)

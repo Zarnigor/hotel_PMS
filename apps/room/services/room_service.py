@@ -29,6 +29,9 @@ class RoomStatus:
 class RoomService:
     @staticmethod
     def create_room(room_number: str, room_type: int, status: str = RoomStatus.AVAILABLE) -> Room:
+        """Create a new room by room_number, room_type and status.
+            First verifies that the status is valid and room_number is not empty, then creates a new Room object.
+        """
         if not room_number:
             raise RoomInvalidError(_("Xona raqami bo'sh bo'lishi munkin emas"))
         if not status in RoomStatus.CHOICES:
@@ -40,6 +43,11 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def change_status(cls, room_id: int, new_status: str) -> Room:
+        """Change the status of the room by room_id.
+            Firstly verifies that the new_status is acceptable from room.status
+        """
+
+
         if new_status not in RoomStatus.CHOICES:
             raise RoomInvalidError(f"'(new_status=%(new_status)s)' — noto'g'ri xona statusi.")
 
@@ -56,6 +64,8 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def update_room(cls, room_id: int, **fields) -> Room:
+        """Update the room by room_id"""
+
         room = cls.get_room(room_id)
         allowed = {"room_number", "room_type_id"}
         for key, value in fields.items():
@@ -67,5 +77,7 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def delete_room(cls, room_id: int) -> None:
+        """Delete the room by room_id"""
+
         room = cls.get_room(room_id)
         room.delete()

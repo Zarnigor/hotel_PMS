@@ -3,12 +3,10 @@ services:
     image: postgres:16
     container_name: pms_postgres
     restart: always
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file: .env
+
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pms_postgres_data:/var/lib/postgresql/data
     networks:
       - pms_network
 
@@ -22,6 +20,7 @@ services:
   django:
     build: .
     container_name: pms_django
+    image: pms_django
     restart: always
     command: sh -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 root.wsgi:application"
     ports:
@@ -38,7 +37,7 @@ services:
       - pms_network
 
   celery:
-    build: .
+    image: pms_django
     container_name: pms_celery
     restart: always
     command: celery -A root worker -l info
@@ -54,7 +53,7 @@ services:
       - pms_network
 
 volumes:
-  postgres_data:
+  pms_postgres_data:
   static_volume:
 
 networks:

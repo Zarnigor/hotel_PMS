@@ -1,11 +1,8 @@
-from decimal import Decimal
-
 from django.db import transaction
-from django.db.models import QuerySet
 
-from apps.room.models import Room, RoomTypeBase
+from apps.room.models import Room
 from apps.room.services.room_type_service import RoomTypeService
-from exceptions import RoomInvalidError, RoomNotFoundError, RoomUnbookableError, OverbookingError
+from exceptions import RoomInvalidError
 
 from django.utils.translation import gettext_lazy as _
 
@@ -40,31 +37,6 @@ class RoomService:
 
         return Room.objects.create(room_number=room_number,room_status=status,room_type=room_type)
 
-
-    @staticmethod
-    def get_room(room_id: int) -> Room:
-        try:
-            return Room.objects.select_related("room_type").get(id=room_id)
-        except Room.DoesNotExist:
-            raise RoomNotFoundError(_("Xona (id=%(id)s) topilmadi.")%{"id":room_id})
-
-    @staticmethod
-    def list_rooms(room_type_id: int | None = None, status: str | None = None) -> QuerySet[Room]:
-        qs = Room.objects.select_related("room_type").all()
-        if room_type_id is not None:
-            qs = qs.filter(room_type=room_type_id)
-        if status is not None:
-            qs = qs.filter(status=status)
-        return qs.order_by("room_number")
-
-    @classmethod
-    def ensure_bookable(cls, room: Room) -> None:
-        """Status check"""
-        if room.status in RoomStatus.UNBOOKABLE:
-            raise RoomUnbookableError(
-                _("Xona '(number=%(number)s)' hozir '(status=%(status)s)' holatida — band qilib bo'lmaydi.") % {"number": room.room_number, "status": room.status}
-            )
-
     @classmethod
     @transaction.atomic
     def change_status(cls, room_id: int, new_status: str) -> Room:
@@ -79,26 +51,6 @@ class RoomService:
             )
         room.status = new_status
         room.save(update_fields=["status"])
-        return room
-
-
-    @classmethod
-    def find_available_room(cls, room_type_id: int) -> Room:
-        room = (
-            Room.objects.select_related("room_type")
-            .filter(room_type_id=room_type_id, status=RoomStatus.AVAILABLE)
-            .first()
-        )
-        if room is None:
-            raise OverbookingError(
-                _("(id=%(id)s) uchun hozir bo'sh xona yo'q.")%{"id": room_type_id}
-            )
-        return room
-
-    @classmethod
-    def get_bookable_room(cls, room_id: int) -> Room:
-        room = cls.get_room(room_id)
-        cls.ensure_bookable(room)
         return room
 
     @classmethod

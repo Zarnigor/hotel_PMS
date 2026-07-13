@@ -1,11 +1,10 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from apps.room.models import RoomType, RoomTypeBase
-from exceptions import RoomNotFoundError, RoomInvalidError
+from exceptions import RoomInvalidError
 
 
 class RoomTypeService:
@@ -14,19 +13,6 @@ class RoomTypeService:
         if not name:
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
         return RoomTypeBase.objects.create(name=name, description=description)
-
-    @staticmethod
-    def get_base(room_type_base_id: int) -> RoomTypeBase:
-        try:
-            return RoomTypeBase.objects.get(id=room_type_base_id)
-        except RoomTypeBase.DoesNotExist:
-            raise RoomNotFoundError(
-                _("RoomTypeBase (id=%(id)s) topilmadi.") % {"id": room_type_base_id}
-            )
-
-    @staticmethod
-    def list_bases() -> QuerySet[RoomTypeBase]:
-        return RoomTypeBase.objects.all().order_by("name")
 
     @classmethod
     @transaction.atomic
@@ -44,7 +30,6 @@ class RoomTypeService:
     def delete_base(cls, room_type_base_id: int) -> None:
         base = cls.get_base(room_type_base_id)
         base.delete() # TO DO: soft delete kerak
-
 
     @staticmethod
     @transaction.atomic
@@ -64,20 +49,6 @@ class RoomTypeService:
             name=name,
             base_price=base_price,
         )
-
-    @staticmethod
-    def get_room_type(room_type_id: int) -> RoomType:
-        try:
-            return RoomType.objects.select_related("room_type_base").get(id=room_type_id)
-        except RoomType.DoesNotExist:
-            raise RoomNotFoundError(_("RoomType (id=%(id)s) topilmadi.") % {"id": room_type_id})
-
-    @staticmethod
-    def list_room_types(room_type_base_id: int | None = None) -> QuerySet[RoomType]:
-        qs = RoomType.objects.select_related("room_type_base").all()
-        if room_type_base_id is not None:
-            qs = qs.filter(room_type_base_id=room_type_base_id)
-        return qs.order_by("name")
 
     @classmethod
     @transaction.atomic

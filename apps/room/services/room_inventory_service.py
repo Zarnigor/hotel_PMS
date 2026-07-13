@@ -30,14 +30,6 @@ class RoomInventoryService:
         -
         -
     """
-    @staticmethod
-    def get_for_date(room_type_id: int, date: datetime.date) -> RoomInventory:
-        try:
-            return RoomInventory.objects.get(room_type_id=room_type_id, date=date)
-        except RoomInventory.DoesNotExist:
-            raise RatePlanNotFoundError(
-                _("room_type_id=(id=%(id)s) uchun (date=%(date)) sanasida narx/inventar rejasi yo'q.") % {"id": room_type_id, "date": date}
-            )
 
     @staticmethod
     @transaction.atomic
@@ -71,27 +63,6 @@ class RoomInventoryService:
         ]
         return RoomInventory.objects.bulk_create(to_create)
 
-    @staticmethod
-    def check_availability(
-        room_type_id: int,
-        check_in_date: datetime.date,
-        check_out_date: datetime.date,
-    ) -> bool:
-        nights = _date_range(check_in_date, check_out_date)
-
-        rows = {
-            row.date: row
-            for row in RoomInventory.objects.filter(
-                room_type_id=room_type_id,
-                date__in=nights,
-            )
-        }
-
-        for night in nights:
-            row = rows.get(night)
-            if row is None or row.booked_rooms >= row.total_rooms:
-                return False
-        return True
 
     @classmethod
     @transaction.atomic

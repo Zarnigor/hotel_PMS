@@ -1,6 +1,6 @@
 from django.db import models
 from apps.room.models.managers import RoomTypeManager
-
+from django.utils import timezone
 
 class RoomType(models.Model):
     room_type_base = models.ForeignKey(
@@ -23,4 +23,13 @@ class RoomType(models.Model):
 
     def __str__(self):
         return self.name
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["is_deleted", "deleted_at"])
+
+    def hard_delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
 

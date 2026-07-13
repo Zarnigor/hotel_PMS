@@ -2,8 +2,8 @@ from django.db import transaction
 
 from apps.room.models import Room
 from apps.room.services.room_type_service import RoomTypeService
-from exceptions import RoomInvalidError, RoomNotFoundError
-
+from exceptions import RoomInvalidError
+from apps.room.utils import RoomUtil
 from django.utils.translation import gettext_lazy as _
 
 class RoomStatus:
@@ -36,7 +36,7 @@ class RoomService:
             raise RoomInvalidError(_("Xona raqami bo'sh bo'lishi munkin emas"))
         if not status in RoomStatus.CHOICES:
             raise RoomInvalidError(_("Xona statusi xato"))
-        RoomTypeService.get_room_type(room_type)
+        RoomUtil.get_room_type(room_type)
 
         return Room.objects.create(room_number=room_number,room_status=status,room_type=room_type)
 
@@ -51,7 +51,7 @@ class RoomService:
         if new_status not in RoomStatus.CHOICES:
             raise RoomInvalidError(f"'(new_status=%(new_status)s)' — noto'g'ri xona statusi.")
 
-        room = cls.get_room(room_id)
+        room = RoomUtil.get_room(room_id)
         allowed_next = RoomStatus.ALLOWED_TRANSITIONS.get(room.status, set())
         if new_status not in allowed_next and new_status != room.status:
             raise RoomInvalidError(
@@ -66,7 +66,7 @@ class RoomService:
     def update_room(cls, room_id: int, **fields) -> Room:
         """Update the room by room_id"""
 
-        room = cls.get_room(room_id)
+        room = RoomUtil.get_room(room_id)
         allowed = {"room_number", "room_type_id"}
         for key, value in fields.items():
             if key in allowed:
@@ -75,8 +75,9 @@ class RoomService:
         return room
 
     @classmethod
-    def get_room(cls, room_id: int) -> "Room":
-        room = Room.objects.filter(pk=room_id).first()
-        if room is None:
-            raise RoomNotFoundError(room_id)
-        return room
+    @transaction.atomic
+    def delete_room(cls, room_id: int) -> None:
+        """Delete the room by room_id"""
+
+        room = RoomUtil.get_room(room_id)
+        room.delete()

@@ -1,30 +1,21 @@
 import datetime
+import exceptions
 
-from apps.room.models import Room, RoomInventory
-from exceptions import (
-    RatePlanNotFoundError,
-    InvalidDateRangeError,
-)
+from apps.room.models import RoomInventory
 from django.utils.translation import gettext_lazy as _
 
-
-def _date_range(check_in_date: datetime.date, check_out_date: datetime.date):
-    if check_out_date <= check_in_date:
-        raise InvalidDateRangeError()
-    if check_in_date < datetime.date.today():
-        raise InvalidDateRangeError(_("check_in_date o'tib ketgan sana bo'lishi mumkin emas."))
-    n_nights = (check_out_date - check_in_date).days
-    return [check_in_date + datetime.timedelta(days=i) for i in range(n_nights)]
+from apps.room.services.room_inventory_service import _date_range
 
 
 class RoomInventoryUtil:
 
     @staticmethod
     def get_for_date(room_type_id: int, date: datetime.date) -> RoomInventory:
+        """get room inventory for given date and room type."""
         try:
             return RoomInventory.objects.get(room_type_id=room_type_id, date=date)
         except RoomInventory.DoesNotExist:
-            raise RatePlanNotFoundError(
+            raise exceptions.RatePlanNotFoundError(
                 _("room_type_id=(id=%(id)s) uchun (date=%(date)s) sanasida narx/inventar rejasi yo'q.") % {"id": room_type_id, "date": date}
             )
 
@@ -34,6 +25,7 @@ class RoomInventoryUtil:
         check_in_date: datetime.date,
         check_out_date: datetime.date,
     ) -> bool:
+        """Check availability of room inventory."""
         nights = _date_range(check_in_date, check_out_date)
 
         rows = {

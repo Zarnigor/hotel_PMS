@@ -10,6 +10,7 @@ from exceptions import RoomInvalidError
 class RoomTypeService:
     @staticmethod
     def create_base(name: str, description: str = "") -> RoomTypeBase:
+        """Create a new room type object."""
         if not name:
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
         return RoomTypeBase.objects.create(name=name, description=description)
@@ -17,6 +18,7 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def update_base(cls, room_type_base_id: int, **fields) -> RoomTypeBase:
+        """Update a room type object."""
         base = cls.get_base(room_type_base_id)
         allowed = {"name", "description"}
         for key, value in fields.items():
@@ -28,6 +30,7 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def delete_base(cls, room_type_base_id: int) -> None:
+        """Delete a room type object by room_type_base_id."""
         base = cls.get_base(room_type_base_id)
         base.delete() # TO DO: soft delete kerak
 
@@ -38,6 +41,9 @@ class RoomTypeService:
         name: str,
         base_price: Decimal,
     ) -> RoomType:
+        """Create a new room type object.
+
+        Get the type from base class. Checks the name and base_price isnot empty."""
         if not name:
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
         if base_price is None or base_price < 0:
@@ -53,6 +59,7 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def update_price(cls, room_type_id: int, base_price: Decimal) -> RoomType:
+        """Update a room type object. Get the type from base class"""
         if base_price is None or base_price < 0:
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
         room_type = cls.get_room_type(room_type_id)
@@ -63,6 +70,7 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def update_room_type(cls, room_type_id: int, **fields) -> RoomType:
+        """Update a room type object. Get the type from base class"""
         room_type = cls.get_room_type(room_type_id)
         allowed = {"name", "base_price", "room_type_base_id"}
         if "base_price" in fields and fields["base_price"] is not None and fields["base_price"] < 0:
@@ -76,5 +84,8 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def delete_room_type(cls, room_type_id: int) -> None:
+        """Delete a room type object by room_type_id.
+         By soft deletes the room type.
+        """
         room_type = cls.get_room_type(room_type_id)
         room_type.delete() # TO DO soft delete kerak

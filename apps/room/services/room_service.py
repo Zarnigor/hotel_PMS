@@ -2,7 +2,7 @@ from django.db import transaction
 
 from apps.room.models import Room
 from apps.room.services.room_type_service import RoomTypeService
-from exceptions import RoomInvalidError
+from exceptions import RoomInvalidError, RoomNotFoundError
 
 from django.utils.translation import gettext_lazy as _
 
@@ -75,9 +75,8 @@ class RoomService:
         return room
 
     @classmethod
-    @transaction.atomic
-    def delete_room(cls, room_id: int) -> None:
-        """Delete the room by room_id"""
-
-        room = cls.get_room(room_id)
-        room.delete()
+    def get_room(cls, room_id: int) -> "Room":
+        room = Room.objects.filter(pk=room_id).first()
+        if room is None:
+            raise RoomNotFoundError(room_id)
+        return room

@@ -3,7 +3,7 @@ serializer orqali service'ga yo'naltiriladi. Custom exceptionlar (masalan
 `OverbookingError`, `ReservationNotFoundError`) global exception handler
 orqali tegishli HTTP status'ga map qilinadi, shuning uchun view'larda
 try/except yozilmaydi."""
-
+from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -17,13 +17,19 @@ from apps.reservation.serializers import (
 from apps.reservation.utils import get_reservation, list_reservations
 
 
+@extend_schema_view(
+    create=extend_schema( request=ReservationWriteSerializer,
+                          responses={201: ReservationDetailSerializer}
+                        ),
+    list=extend_schema(responses={200: ReservationListSerializer}),
+)
 class ReservationViewSet(viewsets.ViewSet):
     """Reservation'lar uchun CRUD + cancel action.
 
     GET (list/retrieve) — selector orqali, raw SQL.
     POST (create) va cancel — serializer orqali, service (ORM) chaqiriladi.
     """
-
+    @extend_schema(tags=['reservation'])
     def list(self, request):
         """Reservationlar ro'yxati, filtr va pagination bilan."""
         limit = int(request.query_params.get('limit', 20))
@@ -38,12 +44,14 @@ class ReservationViewSet(viewsets.ViewSet):
         serializer = ReservationListSerializer(data['results'], many=True)
         return Response({**data, 'results': serializer.data})
 
+    @extend_schema(tags=['reservation'])
     def retrieve(self, request, pk=None):
         """Bitta reservation, nested room_type/assigned_room bilan."""
         reservation = get_reservation(pk)
         serializer = ReservationDetailSerializer(reservation)
         return Response(serializer.data)
 
+    @extend_schema(tags=['reservation'])
     def create(self, request):
         """Yangi reservation yaratish — inventory lock va overbooking
         tekshiruvi `services.create_reservation` ichida bajariladi."""
@@ -52,6 +60,7 @@ class ReservationViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(tags=['reservation'])
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """Reservationni bekor qilish — inventory bo'shatiladi."""

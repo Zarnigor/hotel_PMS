@@ -8,7 +8,6 @@ class RoomTypeBase(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     objects = RoomTypeBaseManager()
@@ -21,9 +20,8 @@ class RoomTypeBase(models.Model):
         return self.name
 
     def delete(self, *args, **kwargs):
-        self.is_deleted = True
         self.deleted_at = timezone.now()
-        self.save(update_fields=["is_deleted", "deleted_at"])
+        self.save(update_fields=["deleted_at"])
 
     def hard_delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)

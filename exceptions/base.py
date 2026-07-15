@@ -1,6 +1,8 @@
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import APIException
 
-class BaseAppException(Exception):
+
+class BaseAppException(APIException):
     """Barcha custom exception'lar shu klassdan meros oladi"""
     status_code = 400
     default_message = _("Xatolik yuz berdi")

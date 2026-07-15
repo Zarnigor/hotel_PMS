@@ -1,1 +1,1 @@
-from reservations import ReservationViewSet
+from .reservations import ReservationViewSet

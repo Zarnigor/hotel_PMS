@@ -19,7 +19,7 @@ from exceptions import (
 
 @transaction.atomic
 def create_reservation(
-    guess_name: str,
+    guest_name: str,
     room_type_id: int,
     check_in_date: date,
     check_out_date: date,
@@ -39,7 +39,7 @@ def create_reservation(
     except RoomType.DoesNotExist:
         raise RoomNotFoundError(f"RoomType topilmadi: id={room_type_id}")
 
-    if room_type.is_deleted:
+    if room_type.delete_at is not None:
         raise RoomUnbookableError(f"RoomType o'chirilgan: id={room_type_id}")
 
     expected_days = (check_out_date - check_in_date).days
@@ -61,7 +61,7 @@ def create_reservation(
     inventory_qs.update(booked_rooms=F("booked_rooms") + 1)
 
     return Reservation.objects.create(
-        guess_name=guess_name,
+        guest_name=guest_name,
         room_type_id=room_type_id,
         check_in_date=check_in_date,
         check_out_date=check_out_date,

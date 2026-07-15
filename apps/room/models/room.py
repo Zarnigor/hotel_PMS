@@ -13,7 +13,6 @@ class Room(models.Model):
         CLEANING = "cleaning", _("Cleaning")
         OUT_OF_SERVICE = "out_of_service", _("OUT_OF_SERVICE")
 
-    is_deleted = models.BooleanField(default=False, db_index=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     room_number = models.CharField(max_length=10, unique=True)
@@ -28,7 +27,7 @@ class Room(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["room_number"],
-                condition=models.Q(is_deleted=False),
+                condition=models.Q(deleted_at=None),
                 name="unique_active_room_number",
             )
         ]
@@ -37,9 +36,8 @@ class Room(models.Model):
         return self.room_number
 
     def delete(self, *args, **kwargs):
-        self.is_deleted = True
         self.deleted_at = timezone.now()
-        self.save(update_fields=["is_deleted", "deleted_at"])
+        self.save(update_fields=["deleted_at"])
 
     def hard_delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)

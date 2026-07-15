@@ -13,7 +13,7 @@ _BASE_SELECT = """
         r.id, r.guest_name, r.check_in_date, r.check_out_date,
         r.status, r.created_at,
         rt.id AS room_type__id, rt.name AS room_type__name, rt.base_price AS room_type__base_price,
-        room.id AS assigned_room__id, room.number AS assigned_room__number
+        room.id AS assigned_room__id, room.room_number AS assigned_room__number
     FROM reservations r
     INNER JOIN room_types rt ON rt.id = r.room_type_id
     LEFT JOIN rooms room ON room.id = r.assigned_room_id

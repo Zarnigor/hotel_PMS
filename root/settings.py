@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'apps.room',
     'apps.reservation',
 ]
@@ -69,11 +70,18 @@ DATABASES = {
 }
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
+    'DEFAULT_PERMISSION_CLASSES': [
+        'drf_spectacular.openapi.AutoSchema'
     ]
+
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'PMS API',
+    'DESCRIPTION': 'API hujjatlari',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')

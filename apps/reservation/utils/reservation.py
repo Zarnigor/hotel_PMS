@@ -4,7 +4,7 @@ from typing import Any
 
 from django.db import connection
 
-from apps.reservation.utils.helpers import dictfetchall
+from apps.reservation.utils.helpers import dictfetchall, to_nested
 from exceptions import ReservationNotFoundError
 
 
@@ -20,21 +20,6 @@ _BASE_SELECT = """
 """
 
 
-def _to_nested(row: dict[str, Any]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    nested: dict[str, dict[str, Any]] = {}
-    for key, value in row.items():
-        if "__" in key:
-            prefix, field = key.split("__", 1)
-            nested.setdefault(prefix, {})[field] = value
-        else:
-            result[key] = value
-    if nested.get("assigned_room", {}).get("id") is None:
-        nested["assigned_room"] = None
-    result.update(nested)
-    return result
-
-
 def get_reservation(reservation_id: int) -> dict[str, Any]:
     """ID bo'yicha bitta reservationni nested bilan qaytaradi.
 
@@ -46,7 +31,7 @@ def get_reservation(reservation_id: int) -> dict[str, Any]:
         rows = dictfetchall(cursor)
     if not rows:
         raise ReservationNotFoundError(f"Reservation topilmadi: id={reservation_id}")
-    return _to_nested(rows[0])
+    return to_nested(rows[0])
 
 
 def list_reservations(
@@ -80,5 +65,5 @@ def list_reservations(
         "count": total_count,
         "limit": limit,
         "offset": offset,
-        "results": [_to_nested(row) for row in rows],
+        "results": [to_nested(row) for row in rows],
     }

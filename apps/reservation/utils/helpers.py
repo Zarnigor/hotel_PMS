@@ -21,3 +21,18 @@ def validate_date_range(check_in_date: date, check_out_date: date) -> None:
         raise InvalidDateRangeError(
             "check_out_date check_in_date dan keyin bo'lishi kerak"
         )
+
+
+def to_nested(row: dict[str, Any]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    nested: dict[str, dict[str, Any]] = {}
+    for key, value in row.items():
+        if "__" in key:
+            prefix, field = key.split("__", 1)
+            nested.setdefault(prefix, {})[field] = value
+        else:
+            result[key] = value
+    if nested.get("assigned_room", {}).get("id") is None:
+        nested["assigned_room"] = None
+    result.update(nested)
+    return result

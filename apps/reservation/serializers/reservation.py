@@ -6,23 +6,10 @@ from rest_framework import serializers
 
 from apps.reservation.models import Reservation
 from apps.reservation.services import create_reservation, cancel_reservation
-
-
-class RoomTypeShortSerializer(serializers.Serializer):
-    """Selectordan kelgan nested room_type dict uchun (swagger uchun ham kerak)."""
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    base_price = serializers.DecimalField(max_digits=10, decimal_places=2)
-
-
-class AssignedRoomShortSerializer(serializers.Serializer):
-    """Selectordan kelgan nested assigned_room dict uchun."""
-    id = serializers.IntegerField()
-    number = serializers.CharField()
+from apps.room.serializers import RoomTypeShortSerializer, AssignedRoomShortSerializer
 
 
 class ReservationListSerializer(serializers.Serializer):
-    """List/swagger uchun — selector natijasi (dict) bilan ishlaydi, ModelSerializer emas."""
     id = serializers.IntegerField()
     guest_name = serializers.CharField()
     room_type = RoomTypeShortSerializer()
@@ -33,9 +20,6 @@ class ReservationListSerializer(serializers.Serializer):
 
 
 class ReservationDetailSerializer(serializers.Serializer):
-    """Retrieve uchun — selector (dict) va service (ORM instance) ikkalasidan ham
-    kelgan ma'lumotni ko'rsata oladi, chunki DRF `get_attribute()` avval dict-key,
-    keyin object-attribute'ni sinaydi."""
     id = serializers.IntegerField()
     guest_name = serializers.CharField()
     room_type = RoomTypeShortSerializer()
@@ -47,9 +31,6 @@ class ReservationDetailSerializer(serializers.Serializer):
 
 
 class ReservationWriteSerializer(serializers.ModelSerializer):
-    """Create uchun — validatsiya shu yerda, orkestratsiya (inventory lock,
-    overbooking tekshiruvi) `services.create_reservation`da."""
-
     class Meta:
         model = Reservation
         fields = ['guest_name', 'room_type', 'check_in_date', 'check_out_date']
@@ -73,14 +54,10 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        # response'ni Detail shaklida qaytarish — ORM instance ham dict kabi
-        # to'g'ri serialize bo'ladi (DRF get_attribute() ikkalasini ham qo'llab-quvvatlaydi)
         return ReservationDetailSerializer(instance).data
 
 
 class ReservationCancelSerializer(serializers.Serializer):
-    """Cancel action uchun — bo'sh body, faqat orkestratsiya."""
-
     def save(self, **kwargs):
         reservation_id = self.context['reservation_id']
         return cancel_reservation(reservation_id)

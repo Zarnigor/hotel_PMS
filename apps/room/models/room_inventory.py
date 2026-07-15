@@ -11,6 +11,7 @@ class RoomInventory(models.Model):
     booked_rooms = models.PositiveIntegerField(default=0)
 
     class Meta:
+        verbose_name_plural = "Room Inventories"
         db_table = "room_inventories"
         constraints = [
             models.UniqueConstraint(

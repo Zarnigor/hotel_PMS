@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='Reservation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guess_name', models.CharField(max_length=10, unique=True)),
+                ('guest_name', models.CharField(max_length=10, unique=True)),
                 ('check_in_date', models.DateField()),
                 ('check_out_date', models.DateField()),
                 ('status', models.CharField(choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('checked_in', 'Checked in'), ('checked_out', 'Checked out'), ('cancelled', 'Cancelled')], default='pending', max_length=20)),

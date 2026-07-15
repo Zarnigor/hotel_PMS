@@ -12,7 +12,7 @@ class Reservation(models.Model):
         CANCELLED = "cancelled", _("Cancelled")
 
 
-    guess_name = models.CharField(max_length=10, unique=True)
+    guest_name = models.CharField(max_length=10, unique=True)
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     assigned_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
     check_in_date = models.DateField()
@@ -24,4 +24,4 @@ class Reservation(models.Model):
         db_table = 'reservations'
 
     def __str__(self):
-        return self.guess_name
+        return self.guest_name

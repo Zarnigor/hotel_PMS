@@ -13,7 +13,7 @@ class RoomManager(models.Manager):
         return RoomQuerySet(self.model, using=self._db).alive()
 
 
-class RoomTypeBaseQuerySet(models.Manager):
+class RoomTypeBaseQuerySet(models.QuerySet):
     def alive(self):
         return self.filter(is_deleted=False)
 
@@ -26,7 +26,7 @@ class RoomTypeBaseManager(models.Manager):
         return RoomTypeBaseQuerySet(self.model, using=self._db).alive()
 
 
-class RoomTypeQuerySet(models.Manager):
+class RoomTypeQuerySet(models.QuerySet):
     def alive(self):
         return self.filter(is_deleted=False)
 

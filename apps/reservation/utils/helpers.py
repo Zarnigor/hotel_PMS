@@ -1,12 +1,14 @@
 from datetime import date
 from typing import Any
-
 from django.db.backends.utils import CursorWrapper
+from exceptions import InvalidDateRangeError
+
 
 def dictfetchall(cursor: CursorWrapper) -> list[dict[str, Any]]:
     """Cursor natijasini list[dict] ko'rinishiga o'giradi."""
     columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
 
 
 def validate_date_range(check_in_date: date, check_out_date: date) -> None:

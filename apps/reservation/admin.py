@@ -5,7 +5,7 @@ from apps.reservation.models import Reservation
 class ReservationAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "guess_name",
+        "guest_name",
         "room_type",
         "assigned_room",
         "check_in_date",
@@ -14,7 +14,7 @@ class ReservationAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("status", "room_type", "check_in_date", "check_out_date")
-    search_fields = ("guess_name",)
+    search_fields = ("guest_name",)
     autocomplete_fields = ("room_type", "assigned_room")
     date_hierarchy = "check_in_date"
     ordering = ("-created_at",)

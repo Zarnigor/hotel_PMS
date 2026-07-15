@@ -89,7 +89,7 @@ class RoomInventoryService:
         each date, then atomically increments booked_rooms by
         total_room_count for all matching rows.
         """
-        nights = RoomUtil._date_range(check_in_date, check_out_date)
+        nights = _date_range(check_in_date, check_out_date)
 
         rows = list(
             RoomInventory.objects.select_for_update()
@@ -132,7 +132,7 @@ class RoomInventoryService:
             are booked, are clamped rather than skipped, so booked_rooms
             never goes negative.
         """
-        nights = RoomUtil._date_range(check_in_date, check_out_date)
+        nights = _date_range(check_in_date, check_out_date)
 
         rows = list(
             RoomInventory.objects.select_for_update()

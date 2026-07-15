@@ -1,0 +1,84 @@
+"""Reservation'lar uchun o'qish (get/list) funksiyalari — raw SQL, side-effect yo'q."""
+
+from typing import Any
+
+from django.db import connection
+
+from apps.reservation.utils.helpers import dictfetchall
+from exceptions import ReservationNotFoundError
+
+
+_BASE_SELECT = """
+    SELECT
+        r.id, r.guest_name, r.check_in_date, r.check_out_date,
+        r.status, r.created_at,
+        rt.id AS room_type__id, rt.name AS room_type__name, rt.base_price AS room_type__base_price,
+        room.id AS assigned_room__id, room.number AS assigned_room__number
+    FROM reservations r
+    INNER JOIN room_types rt ON rt.id = r.room_type_id
+    LEFT JOIN rooms room ON room.id = r.assigned_room_id
+"""
+
+
+def _to_nested(row: dict[str, Any]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    nested: dict[str, dict[str, Any]] = {}
+    for key, value in row.items():
+        if "__" in key:
+            prefix, field = key.split("__", 1)
+            nested.setdefault(prefix, {})[field] = value
+        else:
+            result[key] = value
+    if nested.get("assigned_room", {}).get("id") is None:
+        nested["assigned_room"] = None
+    result.update(nested)
+    return result
+
+
+def get_reservation(reservation_id: int) -> dict[str, Any]:
+    """ID bo'yicha bitta reservationni nested bilan qaytaradi.
+
+    Raises:
+        ReservationNotFoundError: Bunday ID topilmasa.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(f"{_BASE_SELECT} WHERE r.id = %s", [reservation_id])
+        rows = dictfetchall(cursor)
+    if not rows:
+        raise ReservationNotFoundError(f"Reservation topilmadi: id={reservation_id}")
+    return _to_nested(rows[0])
+
+
+def list_reservations(
+    room_type_id: int | None = None,
+    status: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Filtrlar bo'yicha reservationlar ro'yxatini pagination bilan qaytaradi."""
+    conditions = []
+    params: list[Any] = []
+    if room_type_id is not None:
+        conditions.append("r.room_type_id = %s")
+        params.append(room_type_id)
+    if status is not None:
+        conditions.append("r.status = %s")
+        params.append(status)
+    where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT COUNT(*) FROM reservations r {where_clause}", params)
+        total_count = cursor.fetchone()[0]
+
+        cursor.execute(
+            f"{_BASE_SELECT} {where_clause} ORDER BY r.check_in_date DESC LIMIT %s OFFSET %s",
+            [*params, limit, offset],
+        )
+        rows = dictfetchall(cursor)
+
+    return {
+        "count": total_count,
+        "limit": limit,
+        "offset": offset,
+        "results": [_to_nested(row) for row in rows],
+    }

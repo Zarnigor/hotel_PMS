@@ -10,9 +10,7 @@ from django.utils.translation import gettext_lazy as _
 class RoomUtil:
     @staticmethod
     def get_room_type_base(room_type_base_id: int) -> RoomTypeBase:
-        """
-
-        """
+        """ give all room filtered by room base type id"""
         try:
             return RoomTypeBase.objects.get(id=room_type_base_id)
         except RoomTypeBase.DoesNotExist:

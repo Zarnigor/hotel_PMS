@@ -16,18 +16,16 @@ class ReservationListSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
     check_out_date = serializers.DateField()
-    created_at = serializers.DateTimeField()
 
 
 class ReservationDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     guest_name = serializers.CharField()
-    room_type = RoomTypeShortSerializer()
-    assigned_room = AssignedRoomShortSerializer(allow_null=True)
+    room_type_id = serializers.IntegerField()
+    assigned_room = serializers.IntegerField(allow_null=True)
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
     check_out_date = serializers.DateField()
-    created_at = serializers.DateTimeField()
 
 
 class ReservationWriteSerializer(serializers.ModelSerializer):

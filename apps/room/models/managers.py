@@ -2,10 +2,10 @@ from django.db import models
 
 class RoomQuerySet(models.QuerySet):
     def alive(self):
-        return self.filter(is_deleted=False)
+        return self.filter(deleted_at=None)
 
     def dead(self):
-        return self.filter(is_deleted=True)
+        return self.filter(deleted_at=None)
 
 
 class RoomManager(models.Manager):
@@ -15,10 +15,10 @@ class RoomManager(models.Manager):
 
 class RoomTypeBaseQuerySet(models.QuerySet):
     def alive(self):
-        return self.filter(is_deleted=False)
+        return self.filter(deleted_at=None)
 
     def dead(self):
-        return self.filter(is_deleted=True)
+        return self.filter(deleted_at=None)
 
 
 class RoomTypeBaseManager(models.Manager):
@@ -28,10 +28,10 @@ class RoomTypeBaseManager(models.Manager):
 
 class RoomTypeQuerySet(models.QuerySet):
     def alive(self):
-        return self.filter(is_deleted=False)
+        return self.filter(deleted_at=None)
 
     def dead(self):
-        return self.filter(is_deleted=True)
+        return self.filter(deleted_at=None)
 
 
 class RoomTypeManager(models.Manager):

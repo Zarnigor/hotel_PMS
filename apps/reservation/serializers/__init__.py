@@ -1,4 +1,4 @@
-from reservation import (
+from .reservation import (
     ReservationListSerializer,
     ReservationDetailSerializer,
     ReservationWriteSerializer,

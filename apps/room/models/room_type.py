@@ -12,7 +12,6 @@ class RoomType(models.Model):
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     objects = RoomTypeManager()
@@ -25,7 +24,6 @@ class RoomType(models.Model):
         return self.name
 
     def delete(self, *args, **kwargs):
-        self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save(update_fields=["is_deleted", "deleted_at"])
 

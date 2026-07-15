@@ -1,0 +1,1 @@
+from .room_type_base import RoomTypeBaseViewSet

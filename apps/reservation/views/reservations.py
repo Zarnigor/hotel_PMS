@@ -15,21 +15,25 @@ from apps.reservation.serializers import (
     ReservationCancelSerializer,
 )
 from apps.reservation.utils import get_reservation, list_reservations
+from apps.room.utils.helpers import tagged_viewset_schema
 
 
-@extend_schema_view(
-    create=extend_schema( request=ReservationWriteSerializer,
-                          responses={201: ReservationDetailSerializer}
-                        ),
-    list=extend_schema(responses={200: ReservationListSerializer}),
-)
+@tagged_viewset_schema('Reservation', {'cancel'})
 class ReservationViewSet(viewsets.ViewSet):
     """Reservation'lar uchun CRUD + cancel action.
 
     GET (list/retrieve) — selector orqali, raw SQL.
     POST (create) va cancel — serializer orqali, service (ORM) chaqiriladi.
     """
-    @extend_schema(tags=['reservation'])
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return ReservationWriteSerializer
+        if self.action == "list":
+            return ReservationListSerializer
+        return ReservationDetailSerializer
+
+
     def list(self, request):
         """Reservationlar ro'yxati, filtr va pagination bilan."""
         limit = int(request.query_params.get('limit', 20))
@@ -44,14 +48,13 @@ class ReservationViewSet(viewsets.ViewSet):
         serializer = ReservationListSerializer(data['results'], many=True)
         return Response({**data, 'results': serializer.data})
 
-    @extend_schema(tags=['reservation'])
+
     def retrieve(self, request, pk=None):
         """Bitta reservation, nested room_type/assigned_room bilan."""
         reservation = get_reservation(pk)
         serializer = ReservationDetailSerializer(reservation)
         return Response(serializer.data)
 
-    @extend_schema(tags=['reservation'])
     def create(self, request):
         """Yangi reservation yaratish — inventory lock va overbooking
         tekshiruvi `services.create_reservation` ichida bajariladi."""
@@ -60,7 +63,7 @@ class ReservationViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(tags=['reservation'])
+
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """Reservationni bekor qilish — inventory bo'shatiladi."""

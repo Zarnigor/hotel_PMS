@@ -2,7 +2,7 @@ from apps.room.models import RoomType
 from django.db.models import QuerySet
 
 from apps.room.models import Room, RoomTypeBase
-from apps.room.services import RoomStatus
+from apps.room.utils.constants import RoomStatus
 from exceptions import RoomNotFoundError, RoomUnbookableError, OverbookingError
 
 from django.utils.translation import gettext_lazy as _

@@ -52,7 +52,7 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        return ReservationDetailSerializer(instance).data
+        return ReservationDetailSerializer(instance, context=self._context).data
 
 
 class ReservationCancelSerializer(serializers.Serializer):

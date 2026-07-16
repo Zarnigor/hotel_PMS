@@ -1,30 +1,8 @@
 from django.db import transaction
-
+from apps.room.utils.constants import RoomStatus
 from apps.room.models import Room
-from apps.room.services.room_type_service import RoomTypeService
 from exceptions import RoomInvalidError
 from apps.room.utils import RoomUtil
-from django.utils.translation import gettext_lazy as _
-
-class RoomStatus:
-    AVAILABLE = _("AVAILABLE")
-    OCCUPIED = _("OCCUPIED")
-    CLEANING = _("CLEANING")
-    MAINTENANCE = _("MAINTENANCE")
-    OUT_OF_SERVICE = _("OUT_OF_SERVICE")
-
-    CHOICES = (AVAILABLE, OCCUPIED, CLEANING, MAINTENANCE, OUT_OF_SERVICE)
-
-    UNBOOKABLE = {CLEANING, MAINTENANCE, OUT_OF_SERVICE}
-
-    ALLOWED_TRANSITIONS = {
-        AVAILABLE: {OCCUPIED, MAINTENANCE, OUT_OF_SERVICE},
-        OCCUPIED: {CLEANING, MAINTENANCE},
-        CLEANING: {AVAILABLE, MAINTENANCE},
-        MAINTENANCE: {AVAILABLE, OUT_OF_SERVICE},
-        OUT_OF_SERVICE: {MAINTENANCE, AVAILABLE},
-    }
-
 
 class RoomService:
     @staticmethod

@@ -5,19 +5,10 @@ from apps.room.serializers.room_type_base import (
     RoomTypeBaseSerializer,
     RoomTypeBaseCreateUpdateSerializer, RoomTypeBaseListSerializer,
 )
+from apps.room.utils.helpers import tagged_viewset_schema
 
-@extend_schema_view(
-    list=extend_schema(responses={200: RoomTypeBaseListSerializer}, tags=['room base types']),
-    retrieve=extend_schema(tags=['room base types']),
-    create=extend_schema(
-        request=RoomTypeBaseSerializer,
-        responses={201: RoomTypeBaseCreateUpdateSerializer},
-        tags=['room base types'],
-    ),
-    update=extend_schema(tags=['room base types']),
-    partial_update=extend_schema(tags=['room base types']),
-    destroy=extend_schema(tags=['room base types']),
-)
+
+@tagged_viewset_schema('Room Type bases')
 class RoomTypeBaseViewSet(viewsets.ModelViewSet):
     """
     CRUD uchun ViewSet.
@@ -27,10 +18,9 @@ class RoomTypeBaseViewSet(viewsets.ModelViewSet):
     """
 
     queryset = RoomTypeBase.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action in ["create", "update", "partial_update"]:
+        if self.action in {"create", "update", "partial_update"}:
             return RoomTypeBaseCreateUpdateSerializer
         return RoomTypeBaseSerializer
 

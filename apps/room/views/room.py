@@ -3,9 +3,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils.translation import gettext_lazy as _
-
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
-
 from apps.room.models import Room
 from apps.room.serializers import RoomSerializer, RoomWriteSerializer
 from apps.room.utils.helpers import tagged_viewset_schema

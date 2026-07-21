@@ -45,8 +45,7 @@ class ReservationViewSet(viewsets.ViewSet):
             limit=limit,
             offset=offset,
         )
-        serializer = ReservationListSerializer(data['results'], many=True)
-        return Response({**data, 'results': serializer.data})
+        return Response(data)
 
 
     def retrieve(self, request, pk=None):

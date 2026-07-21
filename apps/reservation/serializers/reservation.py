@@ -21,7 +21,7 @@ class ReservationListSerializer(serializers.Serializer):
 class ReservationDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     guest_name = serializers.CharField()
-    room_type_id = serializers.IntegerField()
+    room_type = serializers.IntegerField()
     assigned_room = serializers.IntegerField(allow_null=True)
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()

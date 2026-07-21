@@ -1,11 +1,13 @@
 import datetime
+from datetime import date
+
 from apps.room.utils import RoomUtil
 
 from django.db import transaction
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 
-from apps.room.models import Room, RoomInventory
+from apps.room.models import Room, RoomInventory, RoomType
 from exceptions import (
     RatePlanNotFoundError,
     OverbookingError,
@@ -161,3 +163,39 @@ class RoomInventoryService:
             row.total_rooms = actual_count
             row.save(update_fields=["total_rooms"])
         return row
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_create_inventory(
+            *,
+            room_type: RoomType,
+            start_date: date,
+            end_date: date,
+            total_rooms: int,
+    ) -> list[RoomInventory]:
+        """Sana oralig'i uchun ommaviy inventarizatsiya yaratadi (idempotent).
+
+        Allaqachon mavjud (date, room_type) juftliklari qayta yaratilmaydi —
+        `unique_inventory_per_date_room_type` constraint asosida filtrlanadi.
+        """
+        target_dates = list(_date_range(start_date, end_date))
+
+        existing_dates = set(
+            RoomInventory.objects.filter(
+                room_type=room_type,
+                date__in=target_dates,
+            ).values_list("date", flat=True)
+        )
+
+        new_records = [
+            RoomInventory(
+                date=day,
+                room_type=room_type,
+                total_rooms=total_rooms,
+                booked_rooms=0,
+            )
+            for day in target_dates
+            if day not in existing_dates
+        ]
+
+        return RoomInventory.objects.bulk_create(new_records)

@@ -10,13 +10,6 @@ from apps.room.utils.helpers import tagged_viewset_schema
 
 @tagged_viewset_schema('Room Type bases')
 class RoomTypeBaseViewSet(viewsets.ModelViewSet):
-    """
-    CRUD uchun ViewSet.
-    - `objects` manager orqali faqat `deleted_at` bo'sh bo'lgan yozuvlar qaytariladi
-      (RoomTypeBaseManager shunday filter qilingan deb faraz qilinmoqda).
-    - DELETE so'rovi model darajasidagi soft delete (`delete()` override) orqali ishlaydi.
-    """
-
     queryset = RoomTypeBase.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]

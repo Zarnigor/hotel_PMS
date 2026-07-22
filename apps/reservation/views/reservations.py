@@ -1,9 +1,3 @@
-"""Reservation views — list/retrieve/create standart ModelViewSet oqimi
-(queryset + filter_backends + global pagination) orqali ishlaydi, xuddi
-Room/RoomType view'lari kabi. Write action'lar serializer orqali
-service'ga yo'naltiriladi. Custom exceptionlar (masalan `OverbookingError`,
-`ReservationNotFoundError`) global exception handler orqali tegishli HTTP
-status'ga map qilinadi, shuning uchun view'larda try/except yozilmaydi."""
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
@@ -22,15 +16,7 @@ from apps.room.utils.helpers import tagged_viewset_schema
 
 @tagged_viewset_schema('Reservation', {'cancel'})
 class ReservationViewSet(viewsets.ModelViewSet):
-    """Reservation'lar uchun list/retrieve/create + cancel action.
-
-    PUT/PATCH/DELETE ataylab o'chirilgan: `services.reservation` da
-    umumiy `update_reservation`/`delete_reservation` mavjud emas —
-    reservationni o'zgartirish/yopish yagona to'g'ri yo'li `cancel`
-    action'i (u inventory'ni ham bo'shatadi). Xom DELETE reservation
-    qatorini butunlay o'chirib, inventory hisobini muvozanatsiz
-    qoldirar edi.
-    """
+    """Reservation'lar uchun list/retrieve/create + cancel action."""
 
     queryset = Reservation.objects.select_related('room_type', 'assigned_room').all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)

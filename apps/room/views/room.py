@@ -10,10 +10,6 @@ from apps.room.utils.helpers import tagged_viewset_schema
 
 @tagged_viewset_schema('Room',{'restore'})
 class RoomViewSet(viewsets.ModelViewSet):
-    """
-    Room uchun CRUD operatsiyalarini boshqaruvchi ViewSet.
-    Soft-delete qo'llab-quvvatlanadi.
-    """
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["room_type", "status"]
     search_fields = ["room_number"]

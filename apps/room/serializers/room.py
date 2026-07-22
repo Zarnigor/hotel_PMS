@@ -78,6 +78,17 @@ class RoomWriteSerializer(serializers.ModelSerializer):
 
 
 class AssignedRoomShortSerializer(serializers.Serializer):
-    """Selectordan kelgan nested assigned_room dict uchun."""
+    """Selectordan kelgan nested assigned_room dict yoki Room ORM obyekti uchun.
+
+    Selector (raw SQL) `number` kalitli dict qaytaradi, ORM oqimlar
+    (masalan reservation cancel/create) esa haqiqiy `Room` obyektini —
+    u yerda maydon nomi `room_number`. Shu farqni hisobga olish uchun
+    `number` maydoni ikkala manbadan ham o'qiy oladigan qilib yozilgan.
+    """
     id = serializers.IntegerField()
-    number = serializers.CharField()
+    number = serializers.SerializerMethodField()
+
+    def get_number(self, obj) -> str:
+        if isinstance(obj, dict):
+            return obj.get("number")
+        return obj.room_number

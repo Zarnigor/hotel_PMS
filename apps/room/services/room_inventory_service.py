@@ -166,6 +166,32 @@ class RoomInventoryService:
 
     @staticmethod
     @transaction.atomic
+    def create_inventory(
+            *,
+            room_type: RoomType,
+            date: datetime.date,
+            total_rooms: int,
+            booked_rooms: int = 0,
+    ) -> RoomInventory:
+        """Bitta (room_type, date) juftligi uchun RoomInventory yozuvi yaratadi."""
+        return RoomInventory.objects.create(
+            room_type=room_type,
+            date=date,
+            total_rooms=total_rooms,
+            booked_rooms=booked_rooms,
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def update_inventory(*, instance: RoomInventory, **validated_data) -> RoomInventory:
+        """RoomInventory yozuvini berilgan maydonlar bilan yangilaydi."""
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save(update_fields=list(validated_data.keys()) or None)
+        return instance
+
+    @staticmethod
+    @transaction.atomic
     def bulk_create_inventory(
             *,
             room_type: RoomType,

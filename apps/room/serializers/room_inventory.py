@@ -98,12 +98,12 @@ class RoomInventoryWriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data: dict) -> RoomInventory:
-        from .services import RoomInventoryService
+        from apps.room.services import RoomInventoryService
 
         return RoomInventoryService.create_inventory(**validated_data)
 
     def update(self, instance: RoomInventory, validated_data: dict) -> RoomInventory:
-        from .services import RoomInventoryService
+        from apps.room.services import RoomInventoryService
 
         return RoomInventoryService.update_inventory(
             instance=instance, **validated_data

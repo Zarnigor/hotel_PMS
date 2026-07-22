@@ -18,8 +18,9 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["room_type_base"]
     search_fields = ["name"]
-    ordering_fields = ["base_price"]
+    ordering_fields = ["id", "base_price", "created_at"]
 
     def get_queryset(self):
         """
@@ -38,7 +39,7 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
         deleted_at=now()` qilib belgilaydi.
         """
         instance = self.get_object()
-        instance.soft_delete()
+        instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

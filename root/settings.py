@@ -74,6 +74,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 20,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -81,6 +83,11 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API hujjatlari',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+
+    "ENUM_NAME_OVERRIDES": {
+        "ReservationStatusEnum": "apps.reservation.models.Reservation.STATUS_CHOICES",
+        "PaymentStatusEnum": "apps.payment.models.Payment.STATUS_CHOICES",
+    },
 }
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')

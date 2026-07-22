@@ -43,9 +43,12 @@ class RoomTypeWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomType
         fields = [
+            "id",
+            "room_type_base",
             "name",
             "base_price",
         ]
+        read_only_fields = ["id"]
 
     def validate_base_price(self, value):
         if value <= 0:
@@ -53,3 +56,12 @@ class RoomTypeWriteSerializer(serializers.ModelSerializer):
                 _("Narx 0 dan katta bo'lishi kerak.")
             )
         return value
+
+    def create(self, validated_data: dict) -> RoomType:
+        from apps.room.services import RoomTypeService
+
+        return RoomTypeService.create_room_type(
+            room_type_base_id=validated_data["room_type_base"].id,
+            name=validated_data["name"],
+            base_price=validated_data["base_price"],
+        )

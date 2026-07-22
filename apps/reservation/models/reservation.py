@@ -11,7 +11,6 @@ class Reservation(models.Model):
         CHECKED_OUT = "checked_out", _("Checked out")
         CANCELLED = "cancelled", _("Cancelled")
 
-
     guest_name = models.CharField(max_length=25)
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     assigned_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)

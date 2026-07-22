@@ -21,8 +21,8 @@ class ReservationListSerializer(serializers.Serializer):
 class ReservationDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     guest_name = serializers.CharField()
-    room_type = serializers.IntegerField()
-    assigned_room = serializers.IntegerField(allow_null=True)
+    room_type = RoomTypeShortSerializer()
+    assigned_room = AssignedRoomShortSerializer(allow_null=True)
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
     check_out_date = serializers.DateField()
@@ -58,7 +58,8 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
 class ReservationCancelSerializer(serializers.Serializer):
     def save(self, **kwargs):
         reservation_id = self.context['reservation_id']
-        return cancel_reservation(reservation_id)
+        self.instance = cancel_reservation(reservation_id)
+        return self.instance
 
     def to_representation(self, instance):
         return ReservationDetailSerializer(instance).data

@@ -53,7 +53,6 @@ ROOM_TYPE_BASE_NAMES = [
     f"{adj} {noun}" for adj, noun in itertools.product(ROOM_BASE_ADJECTIVES, ROOM_BASE_NOUNS)
 ][:100]  # aniq 100 ta
 
-# --- RoomType uchun: aniq/haqiqiy xona turlari ---
 SPECIFIC_ROOM_TYPES = [
     "Standard Single Room", "Standard Double Room", "Standard Twin Room",
     "Deluxe Single Room", "Deluxe Double Room", "Deluxe Twin Room",
@@ -67,17 +66,10 @@ SPECIFIC_ROOM_TYPES = [
     "Connecting Room", "Accessible Room", "Honeymoon Suite",
     "Royal Suite", "Grand Deluxe Room", "Comfort Room", "Premium Suite",
 ]  # 30 ta
-
-# Har bir (base, specific_type) juftligiga qo'shiladigan bo'lim/wing raqami.
-# 100 (base) x 30 (specific) x 10 (wing) = 30 000 ta noyob RoomType.
 WINGS_PER_COMBO = 10
 
 
 def chunked_bulk_create(model, objs_iterable, batch_size=BULK_BATCH_SIZE, label=""):
-    """
-    Katta hajmdagi obyektlarni xotirada to'planib qolmasligi uchun
-    bo'lak-bo'lak (chunk) qilib bulk_create qiladi, va progressni chiqaradi.
-    """
     buffer = []
     total = 0
     for obj in objs_iterable:
@@ -123,7 +115,6 @@ class Command(BaseCommand):
             room_type_bases = self._seed_room_type_bases()
             room_types = self._seed_room_types(room_type_bases)
 
-        # Tranzaksion ma'lumotlar — katta hajm, chunk qilib yaratiladi
         rooms = self._seed_rooms(count, room_types)
         self._seed_room_inventory(count, room_types)
         self._seed_reservations(count, room_types, rooms)
@@ -132,10 +123,6 @@ class Command(BaseCommand):
             f"Tayyor: {len(room_type_bases)} ta RoomTypeBase, {len(room_types)} ta RoomType, "
             f"{count} tagacha Room/RoomInventory/Reservation yaratildi."
         ))
-
-    # ------------------------------------------------------------------
-    # Katalog (fixed) ma'lumotlar
-    # ------------------------------------------------------------------
 
     def _seed_room_type_bases(self):
         self.stdout.write(f"RoomTypeBase yaratilmoqda ({len(ROOM_TYPE_BASE_NAMES)} ta)...")
@@ -163,16 +150,7 @@ class Command(BaseCommand):
         RoomType.objects.bulk_create(objs, batch_size=500)
         return list(RoomType.objects.all())
 
-    # ------------------------------------------------------------------
-    # Tranzaksion (--count o'lchamli) ma'lumotlar
-    # ------------------------------------------------------------------
-
     def _seed_rooms(self, count, room_types):
-        """
-        Room raqamlari deterministik hosil qilinadi (random + rejection-loop emas),
-        shuning uchun 1 mln va undan ko'p yozuv uchun ham kafolatlangan noyoblik va tezlik ta'minlanadi.
-        Sxema: bino-qavat-xona, masalan "3-1204" (3-bino, 12-qavat, 04-xona).
-        """
         self.stdout.write(f"Room yaratilmoqda ({count} ta)...")
         rooms_per_floor = 20
         floors_per_building = 30
@@ -197,11 +175,7 @@ class Command(BaseCommand):
 
     def _seed_room_inventory(self, count, room_types):
         """
-        (date, room_type) juftligi noyob bo'lishi kerak. Sana oralig'i
-        room_types soniga qarab avtomatik hisoblanadi: masalan 30 000 ta
-        room_type bilan 1 mln yozuv uchun atigi ~34 kun + zaxira yetarli.
-        Barcha juftliklar oldindan hosil qilinib aralashtiriladi va kerakli
-        sondagisi olinadi — random + rejection-loop o'rniga tez va kafolatli usul.
+        (date, room_type) juftligi noyob bo'lishi kerak.
         """
         self.stdout.write("RoomInventory yaratilmoqda...")
         today = timezone.now().date()
@@ -233,11 +207,6 @@ class Command(BaseCommand):
         chunked_bulk_create(RoomInventory, gen(), label="RoomInventory")
 
     def _seed_reservations(self, count, room_types, rooms):
-        """
-        Guest ismi noyobligi talab qilinmaydi (haqiqiy mehmonxonalarda ham
-        bir xil ismli mehmonlar bo'ladi) — shu sabab 1 mln darajasida
-        random + rejection-loop o'rniga to'g'ridan-to'g'ri generatsiya qilinadi.
-        """
         self.stdout.write(f"Reservation yaratilmoqda ({count} ta)...")
         today = timezone.now().date()
         statuses = [c[0] for c in Reservation.Status.choices]

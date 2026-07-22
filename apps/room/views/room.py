@@ -15,9 +15,9 @@ class RoomViewSet(viewsets.ModelViewSet):
     Soft-delete qo'llab-quvvatlanadi.
     """
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["room_type"]
+    filterset_fields = ["room_type", "status"]
     search_fields = ["room_number"]
-    ordering_fields = ["room_number"]
+    ordering_fields = ["id", "room_number"]
 
     def get_queryset(self):
         return Room.objects.filter(deleted_at__isnull=True).select_related("room_type")
@@ -29,7 +29,7 @@ class RoomViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.soft_delete()
+        instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

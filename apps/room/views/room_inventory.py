@@ -2,11 +2,11 @@ from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 
+from apps.room.filters import RoomInventoryFilter
 from apps.room.models import RoomInventory
 from apps.room.serializers import (
     RoomInventoryBulkCreateSerializer,
@@ -18,15 +18,14 @@ from apps.room.services import RoomInventoryService
 from apps.room.utils.helpers import tagged_viewset_schema
 
 
-@tagged_viewset_schema('Room Inventory', 'bulk_create')
+@tagged_viewset_schema('Room Inventory', {'bulk_create'})
 class RoomInventoryViewSet(ModelViewSet):
     """RoomInventory uchun CRUD va qo'shimcha (bulk-create) endpointlar."""
 
     queryset = RoomInventory.objects.select_related("room_type").all()
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ["room_type", "date"]
-    ordering_fields = ["date", "total_rooms", "booked_rooms"]
+    filterset_class = RoomInventoryFilter
+    ordering_fields = ["id", "date", "total_rooms", "booked_rooms"]
     ordering = ["date"]
 
     def get_serializer_class(self):
@@ -56,7 +55,7 @@ class RoomInventoryViewSet(ModelViewSet):
         detail_serializer = RoomInventoryDetailSerializer(updated_instance)
         return Response(detail_serializer.data)
 
-
+    @action(detail=False, methods=["post"], url_path="bulk-create")
     def bulk_create(self, request):
         """Sana oralig'i uchun ommaviy inventarizatsiya yaratish."""
         serializer = self.get_serializer(data=request.data)

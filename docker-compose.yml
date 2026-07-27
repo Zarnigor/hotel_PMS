@@ -4,6 +4,8 @@ services:
     container_name: pms_postgres
     restart: always
     env_file: .env
+    ports:
+      - "54321:5432"
 
     volumes:
       - pms_postgres_data:/var/lib/postgresql/data
@@ -22,7 +24,7 @@ services:
     container_name: pms_django
     image: pms_django
     restart: always
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 root.wsgi:application"
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     volumes:

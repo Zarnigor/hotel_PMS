@@ -1,11 +1,15 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 from apps.room.models import RoomType, RoomTypeBase
+from apps.room.services.room_inventory_service import RoomInventoryService
 from apps.room.utils import RoomUtil
 from exceptions import RoomInvalidError
+
+INVENTORY_HORIZON_DAYS = 365
 
 
 class RoomTypeService:
@@ -51,11 +55,20 @@ class RoomTypeService:
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
 
         RoomUtil.get_room_type_base(room_type_base_id)
-        return RoomType.objects.create(
+        room_type = RoomType.objects.create(
             room_type_base_id=room_type_base_id,
             name=name,
             base_price=base_price,
         )
+
+        today = date.today()
+        RoomInventoryService.generate_for_date_range(
+            room_type_id=room_type.id,
+            start_date=today,
+            end_date=today + timedelta(days=INVENTORY_HORIZON_DAYS),
+            total_rooms=0,
+        )
+        return room_type
 
     @classmethod
     @transaction.atomic

@@ -1,5 +1,6 @@
 """Reservation'lar uchun o'qish (get/list) funksiyalari — raw SQL, side-effect yo'q."""
 
+from datetime import date
 from typing import Any
 
 from django.db import connection
@@ -37,6 +38,8 @@ def get_reservation(reservation_id: int) -> dict[str, Any]:
 def list_reservations(
     room_type_id: int | None = None,
     status: str | None = None,
+    check_in_date_after: date | None = None,
+    check_in_date_before: date | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> dict[str, Any]:
@@ -49,6 +52,12 @@ def list_reservations(
     if status is not None:
         conditions.append("r.status = %s")
         params.append(status)
+    if check_in_date_after is not None:
+        conditions.append("r.check_in_date >= %s")
+        params.append(check_in_date_after)
+    if check_in_date_before is not None:
+        conditions.append("r.check_in_date <= %s")
+        params.append(check_in_date_before)
     where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
     with connection.cursor() as cursor:

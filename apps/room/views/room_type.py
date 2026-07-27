@@ -11,15 +11,10 @@ from apps.room.utils.helpers import tagged_viewset_schema
 
 @tagged_viewset_schema('Room Types', {'restore'})
 class RoomTypeViewSet(viewsets.ModelViewSet):
-    """
-    RoomType uchun CRUD operatsiyalarini boshqaruvchi ViewSet.
-
-    Soft-delete qo'llab-quvvatlanadi.
-    """
-
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["room_type_base"]
     search_fields = ["name"]
-    ordering_fields = ["base_price"]
+    ordering_fields = ["id", "base_price", "created_at"]
 
     def get_queryset(self):
         """
@@ -38,7 +33,7 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
         deleted_at=now()` qilib belgilaydi.
         """
         instance = self.get_object()
-        instance.soft_delete()
+        instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

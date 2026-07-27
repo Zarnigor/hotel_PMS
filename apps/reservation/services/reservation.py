@@ -39,7 +39,7 @@ def create_reservation(
     except RoomType.DoesNotExist:
         raise RoomNotFoundError(f"RoomType topilmadi: id={room_type_id}")
 
-    if room_type.delete_at is not None:
+    if room_type.deleted_at is not None:
         raise RoomUnbookableError(f"RoomType o'chirilgan: id={room_type_id}")
 
     expected_days = (check_out_date - check_in_date).days

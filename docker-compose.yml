@@ -4,9 +4,6 @@ services:
     container_name: pms_postgres
     restart: always
     env_file: .env
-    ports:
-      - "54321:5432"
-
     volumes:
       - pms_postgres_data:/var/lib/postgresql/data
     networks:
@@ -24,12 +21,13 @@ services:
     container_name: pms_django
     image: pms_django
     restart: always
-    command: sh -c "python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 root.wsgi:application"
     ports:
       - "8000:8000"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
+      - pms_logs:/app/logs   # Filebeat shu yerdan o'qiydi
     env_file:
       - .env
     depends_on:
@@ -45,6 +43,7 @@ services:
     command: celery -A root worker -l info
     volumes:
       - .:/app
+      - pms_logs:/app/logs
     env_file:
       - .env
     depends_on:
@@ -54,9 +53,53 @@ services:
     networks:
       - pms_network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: pms_elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - pms_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: pms_kibana
+    restart: always
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - pms_network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.15.0
+    container_name: pms_filebeat
+    user: root
+    restart: always
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - pms_logs:/logs:ro
+    depends_on:
+      - elasticsearch
+      - django
+    networks:
+      - pms_network
+
 volumes:
   pms_postgres_data:
   static_volume:
+  es_data:
+  pms_logs:
 
 networks:
   pms_network:

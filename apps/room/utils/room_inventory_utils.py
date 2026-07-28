@@ -1,10 +1,14 @@
 import datetime
+import logging
+
 import exceptions
 
 from apps.room.models import RoomInventory
 from django.utils.translation import gettext_lazy as _
 
 from apps.room.services.room_inventory_service import _date_range
+
+logger = logging.getLogger(__name__)
 
 
 class RoomInventoryUtil:
@@ -15,6 +19,10 @@ class RoomInventoryUtil:
         try:
             return RoomInventory.objects.get(room_type_id=room_type_id, date=date)
         except RoomInventory.DoesNotExist:
+            logger.warning(
+                "get_for_date rejected reason=not_found room_type_id=%s date=%s",
+                room_type_id, date,
+            )
             raise exceptions.RatePlanNotFoundError(
                 _("room_type_id=(id=%(id)s) uchun (date=%(date)s) sanasida narx/inventar rejasi yo'q.") % {"id": room_type_id, "date": date}
             )
@@ -28,6 +36,10 @@ class RoomInventoryUtil:
         """Check availability of room inventory."""
         nights = _date_range(check_in_date, check_out_date)
 
+        logger.debug(
+            "check_availability query room_type_id=%s nights=%s",
+            room_type_id, len(nights),
+        )
         rows = {
             row.date: row
             for row in RoomInventory.objects.filter(

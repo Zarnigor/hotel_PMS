@@ -9,9 +9,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
 
 
 INSTALLED_APPS = [
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'root.logging_utils.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -123,3 +125,72 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+# DEBUG=True -> console handler (dev). DEBUG=False -> rotating JSON file
+# handler, read by Filebeat -> Elasticsearch/Kibana (see filebeat.yml).
+_LOG_HANDLERS = ['console'] if DEBUG else ['file']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'request_id': {
+            '()': 'root.logging_utils.RequestIDFilter',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s level=%(levelname)s logger=%(name)s '
+                       'module=%(module)s request_id=%(request_id)s message=%(message)s',
+        },
+        'json': {
+            '()': 'root.logging_utils.JSONFormatter',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'verbose',
+            'filters': ['request_id'],
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'INFO',
+            'filename': str(LOG_DIR / 'django.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+            'filters': ['request_id'],
+        },
+    },
+    'root': {
+        'handlers': _LOG_HANDLERS,
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': _LOG_HANDLERS,
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': _LOG_HANDLERS,
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'apps': {
+            'handlers': _LOG_HANDLERS,
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'exceptions': {
+            'handlers': _LOG_HANDLERS,
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

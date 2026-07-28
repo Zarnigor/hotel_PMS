@@ -1,5 +1,6 @@
 filebeat.inputs:
   - type: log
+    enable: true
     paths:
       - /logs/*.log
     json.keys_under_root: true

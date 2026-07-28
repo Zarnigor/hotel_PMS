@@ -1,5 +1,6 @@
 """Reservation'lar uchun o'qish (get/list) funksiyalari — raw SQL, side-effect yo'q."""
 
+import logging
 from datetime import date
 from typing import Any
 
@@ -7,6 +8,8 @@ from django.db import connection
 
 from apps.reservation.utils.helpers import dictfetchall, to_nested
 from exceptions import ReservationNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 _BASE_SELECT = """
@@ -27,10 +30,15 @@ def get_reservation(reservation_id: int) -> dict[str, Any]:
     Raises:
         ReservationNotFoundError: Bunday ID topilmasa.
     """
+    logger.debug("get_reservation raw_sql reservation_id=%s", reservation_id)
     with connection.cursor() as cursor:
         cursor.execute(f"{_BASE_SELECT} WHERE r.id = %s", [reservation_id])
         rows = dictfetchall(cursor)
     if not rows:
+        logger.warning(
+            "get_reservation rejected reason=not_found reservation_id=%s",
+            reservation_id,
+        )
         raise ReservationNotFoundError(f"Reservation topilmadi: id={reservation_id}")
     return to_nested(rows[0])
 
@@ -60,6 +68,10 @@ def list_reservations(
         params.append(check_in_date_before)
     where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
+    logger.debug(
+        "list_reservations raw_sql room_type_id=%s status=%s limit=%s offset=%s",
+        room_type_id, status, limit, offset,
+    )
     with connection.cursor() as cursor:
         cursor.execute(f"SELECT COUNT(*) FROM reservations r {where_clause}", params)
         total_count = cursor.fetchone()[0]

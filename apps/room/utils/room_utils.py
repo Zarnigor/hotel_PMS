@@ -1,3 +1,5 @@
+import logging
+
 from apps.room.models import RoomType
 from django.db.models import QuerySet
 
@@ -7,6 +9,9 @@ from exceptions import RoomNotFoundError, RoomUnbookableError, OverbookingError
 
 from django.utils.translation import gettext_lazy as _
 
+logger = logging.getLogger(__name__)
+
+
 class RoomUtil:
     @staticmethod
     def get_room_type_base(room_type_base_id: int) -> RoomTypeBase:
@@ -14,6 +19,10 @@ class RoomUtil:
         try:
             return RoomTypeBase.objects.get(id=room_type_base_id)
         except RoomTypeBase.DoesNotExist:
+            logger.warning(
+                "get_room_type_base rejected reason=not_found room_type_base_id=%s",
+                room_type_base_id,
+            )
             raise RoomNotFoundError(
                 _("RoomTypeBase (id=%(id)s) topilmadi.") % {"id": room_type_base_id}
             )
@@ -47,6 +56,7 @@ class RoomUtil:
         try:
             return RoomType.objects.select_related("room_type_base").get(id=room_type_id)
         except RoomType.DoesNotExist:
+            logger.warning("get_room_type rejected reason=not_found room_type_id=%s", room_type_id)
             raise RoomNotFoundError(_("RoomType (id=%(id)s) topilmadi.") % {"id": room_type_id})
 
     @staticmethod
@@ -55,6 +65,7 @@ class RoomUtil:
         try:
             return Room.objects.select_related("room_type").get(id=room_id)
         except Room.DoesNotExist:
+            logger.warning("get_room rejected reason=not_found room_id=%s", room_id)
             raise RoomNotFoundError(_("Xona (id=%(id)s) topilmadi.")%{"id":room_id})
 
     @classmethod
@@ -66,6 +77,10 @@ class RoomUtil:
             .first()
         )
         if room is None:
+            logger.warning(
+                "find_available_room rejected reason=overbooking room_type_id=%s",
+                room_type_id,
+            )
             raise OverbookingError(
                 _("(id=%(id)s) uchun hozir bo'sh xona yo'q.")%{"id": room_type_id}
             )
@@ -82,6 +97,10 @@ class RoomUtil:
     def ensure_bookable(cls, room: Room) -> None:
         """Checks if room is bookable"""
         if room.status in RoomStatus.UNBOOKABLE:
+            logger.warning(
+                "ensure_bookable rejected reason=unbookable_status room_id=%s status=%s",
+                room.id, room.status,
+            )
             raise RoomUnbookableError(
                 _("Xona '(number=%(number)s)' hozir '(status=%(status)s)' holatida — band qilib bo'lmaydi.") % {"number": room.room_number, "status": room.status}
             )

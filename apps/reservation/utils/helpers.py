@@ -1,7 +1,10 @@
+import logging
 from datetime import date
 from typing import Any
 from django.db.backends.utils import CursorWrapper
 from exceptions import InvalidDateRangeError
+
+logger = logging.getLogger(__name__)
 
 
 def dictfetchall(cursor: CursorWrapper) -> list[dict[str, Any]]:
@@ -18,6 +21,11 @@ def validate_date_range(check_in_date: date, check_out_date: date) -> None:
         InvalidDateRangeError: check_out_date check_in_date dan katta bo'lmasa.
     """
     if check_out_date <= check_in_date:
+        logger.warning(
+            "validate_date_range rejected reason=check_out_before_check_in "
+            "check_in_date=%s check_out_date=%s",
+            check_in_date, check_out_date,
+        )
         raise InvalidDateRangeError(
             "check_out_date check_in_date dan keyin bo'lishi kerak"
         )

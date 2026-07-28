@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -9,6 +10,8 @@ from apps.room.services.room_inventory_service import RoomInventoryService
 from apps.room.utils import RoomUtil
 from exceptions import RoomInvalidError
 
+logger = logging.getLogger(__name__)
+
 INVENTORY_HORIZON_DAYS = 365
 
 
@@ -17,6 +20,7 @@ class RoomTypeService:
     def create_base(name: str, description: str = "") -> RoomTypeBase:
         """Create a new room type object."""
         if not name:
+            logger.warning("create_base rejected reason=empty_name")
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
         return RoomTypeBase.objects.create(name=name, description=description)
 
@@ -38,6 +42,7 @@ class RoomTypeService:
         """Delete a room type object by room_type_base_id."""
         base = RoomUtil.get_room_type_base(room_type_base_id)
         base.delete() # TO DO: soft delete kerak
+        logger.info("delete_base success room_type_base_id=%s", room_type_base_id)
 
     @staticmethod
     @transaction.atomic
@@ -50,8 +55,13 @@ class RoomTypeService:
 
         Get the type from base class. Checks the name and base_price isnot empty."""
         if not name:
+            logger.warning("create_room_type rejected reason=empty_name room_type_base_id=%s", room_type_base_id)
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
         if base_price is None or base_price < 0:
+            logger.warning(
+                "create_room_type rejected reason=negative_base_price room_type_base_id=%s base_price=%s",
+                room_type_base_id, base_price,
+            )
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
 
         RoomUtil.get_room_type_base(room_type_base_id)
@@ -68,6 +78,10 @@ class RoomTypeService:
             end_date=today + timedelta(days=INVENTORY_HORIZON_DAYS),
             total_rooms=0,
         )
+        logger.info(
+            "create_room_type success room_type_id=%s room_type_base_id=%s base_price=%s",
+            room_type.id, room_type_base_id, base_price,
+        )
         return room_type
 
     @classmethod
@@ -75,10 +89,15 @@ class RoomTypeService:
     def update_price(cls, room_type_id: int, base_price: Decimal) -> RoomType:
         """Update a room type object. Get the type from base class"""
         if base_price is None or base_price < 0:
+            logger.warning(
+                "update_price rejected reason=negative_base_price room_type_id=%s base_price=%s",
+                room_type_id, base_price,
+            )
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
         room_type = RoomUtil.get_room_type(room_type_id)
         room_type.base_price = base_price
         room_type.save(update_fields=["base_price"])
+        logger.info("update_price success room_type_id=%s base_price=%s", room_type_id, base_price)
         return room_type
 
     @classmethod
@@ -88,6 +107,10 @@ class RoomTypeService:
         room_type = RoomUtil.get_room_type(room_type_id)
         allowed = {"name", "base_price", "room_type_base_id"}
         if "base_price" in fields and fields["base_price"] is not None and fields["base_price"] < 0:
+            logger.warning(
+                "update_room_type rejected reason=negative_base_price room_type_id=%s base_price=%s",
+                room_type_id, fields["base_price"],
+            )
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
         for key, value in fields.items():
             if key in allowed:
@@ -103,3 +126,4 @@ class RoomTypeService:
         """
         room_type = RoomUtil.get_room_type(room_type_id)
         room_type.delete() # TO DO soft delete kerak
+        logger.info("delete_room_type success room_type_id=%s", room_type_id)

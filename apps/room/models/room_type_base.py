@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from apps.room.models.managers import RoomTypeBaseManager
+from apps.room.models.managers import SoftDeleteManager, AllObjectsManager
 
 
 class RoomTypeBase(models.Model):
@@ -10,8 +10,8 @@ class RoomTypeBase(models.Model):
 
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RoomTypeBaseManager()
-    all_objects = models.Manager()
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
 
     class Meta:
         db_table = "room_type_bases"

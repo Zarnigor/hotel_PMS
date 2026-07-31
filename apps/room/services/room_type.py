@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 from apps.room.models import RoomType, RoomTypeBase
-from apps.room.services.room_inventory_service import RoomInventoryService
+from apps.room.services.room_inventory import RoomInventoryService
 from apps.room.utils import RoomUtil
 from exceptions import RoomInvalidError
 

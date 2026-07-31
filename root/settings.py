@@ -78,6 +78,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 20,
+    'EXCEPTION_HANDLER': 'exceptions.custom_exception_handler',
 }
 
 SPECTACULAR_SETTINGS = {

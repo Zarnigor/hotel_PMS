@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.room.models import RoomType
-from apps.room.models.managers import RoomManager
+from apps.room.models.managers import SoftDeleteManager, AllObjectsManager
 
 
 class Room(models.Model):
@@ -19,8 +19,8 @@ class Room(models.Model):
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
 
-    objects = RoomManager()
-    all_objects = models.Manager()
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
 
     class Meta:
         db_table = "rooms"

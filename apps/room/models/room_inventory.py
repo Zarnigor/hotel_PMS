@@ -1,5 +1,8 @@
 from django.db import models
 
+from apps.room.models.managers import SoftDeleteManager, AllObjectsManager
+
+
 class RoomInventory(models.Model):
     date = models.DateField()
     room_type = models.ForeignKey(
@@ -9,6 +12,10 @@ class RoomInventory(models.Model):
     )
     total_rooms = models.PositiveIntegerField()
     booked_rooms = models.PositiveIntegerField(default=0)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
 
     class Meta:
         verbose_name_plural = "Room Inventories"

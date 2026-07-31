@@ -1,5 +1,5 @@
 from django.db import models
-from apps.room.models.managers import RoomTypeManager
+from apps.room.models.managers import SoftDeleteManager, AllObjectsManager
 from django.utils import timezone
 
 class RoomType(models.Model):
@@ -10,12 +10,12 @@ class RoomType(models.Model):
     )
     name = models.CharField(max_length=255)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RoomTypeManager()
-    all_objects = models.Manager()
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
 
     class Meta:
         db_table = "room_types"

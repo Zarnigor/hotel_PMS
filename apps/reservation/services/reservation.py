@@ -46,7 +46,7 @@ def create_reservation(
         validate_date_range(check_in_date, check_out_date)
 
         try:
-            room_type = RoomType.objects.get(pk=room_type_id)
+            room_type = RoomType.all_objects.get(pk=room_type_id)
         except RoomType.DoesNotExist:
             logger.warning(
                 "create_reservation rejected reason=room_type_not_found room_type_id=%s",

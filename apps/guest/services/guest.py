@@ -19,9 +19,6 @@ class GuestService:
         birthday: datetime.date | None = None,
         passport: str = "",
     ) -> Guest:
-        """Create a new guest. `full_name` is required; the rest are optional
-        (may be collected later, e.g. at check-in).
-        """
         if not full_name or not full_name.strip():
             logger.warning("create_guest rejected reason=empty_full_name")
             raise GuestInvalidError(_("Mehmon ismi bo'sh bo'lishi mumkin emas"))
@@ -42,7 +39,6 @@ class GuestService:
     @classmethod
     @transaction.atomic
     def update_guest(cls, guest_id: int, **fields) -> Guest:
-        """Update the guest by guest_id."""
         guest = GuestUtil.get_guest(guest_id)
 
         if "full_name" in fields and not (fields["full_name"] or "").strip():
@@ -72,12 +68,6 @@ class GuestService:
     @classmethod
     @transaction.atomic
     def delete_guest(cls, guest_id: int) -> None:
-        """Delete the guest by guest_id.
-
-        Note: guests referenced by a reservation are protected at the DB
-        level (Reservation.guest uses on_delete=PROTECT), so this raises
-        django.db.models.ProtectedError in that case.
-        """
         guest = GuestUtil.get_guest(guest_id)
         guest.delete()
         logger.info("delete_guest success guest_id=%s", guest_id)

@@ -1,4 +1,4 @@
-from .room_utils import RoomUtil
-from .room_inventory_utils import RoomInventoryUtil
+from .room import RoomUtil
+from .room_inventory import RoomInventoryUtil
 
 __all__ = ['RoomUtil', 'RoomInventoryUtil']

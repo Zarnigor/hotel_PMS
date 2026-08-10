@@ -1,12 +1,12 @@
+from apps.room.models import Room
 
-from django.utils.translation import gettext_lazy as _
 
 class RoomStatus:
-    AVAILABLE = _("AVAILABLE")
-    OCCUPIED = _("OCCUPIED")
-    CLEANING = _("CLEANING")
-    MAINTENANCE = _("MAINTENANCE")
-    OUT_OF_SERVICE = _("OUT_OF_SERVICE")
+    AVAILABLE = Room.Status.AVAILABLE
+    OCCUPIED = Room.Status.OCCUPIED
+    CLEANING = Room.Status.CLEANING
+    MAINTENANCE = Room.Status.MAINTENANCE
+    OUT_OF_SERVICE = Room.Status.OUT_OF_SERVICE
 
     CHOICES = (AVAILABLE, OCCUPIED, CLEANING, MAINTENANCE, OUT_OF_SERVICE)
 
@@ -19,5 +19,3 @@ class RoomStatus:
         MAINTENANCE: {AVAILABLE, OUT_OF_SERVICE},
         OUT_OF_SERVICE: {MAINTENANCE, AVAILABLE},
     }
-
-

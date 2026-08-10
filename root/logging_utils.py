@@ -1,11 +1,3 @@
-"""Request-id correlation and JSON log rendering for structured logging.
-
-Wires a per-request id into every log record (via a contextvar so it also
-reaches code called outside the request/response cycle, e.g. Celery tasks
-sharing the same thread) and renders file-handler records as single-line
-JSON for Filebeat/Elasticsearch ingestion (see filebeat.yml).
-"""
-
 import contextvars
 import json
 import logging
@@ -17,14 +9,6 @@ request_id_var: contextvars.ContextVar[str] = contextvars.ContextVar(
 
 
 class RequestIDMiddleware:
-    """Assign a correlation id to each request and expose it to the logger.
-
-    Reuses the inbound X-Request-ID header when present (e.g. set by an
-    upstream gateway/load balancer) so traces stay consistent across
-    services, otherwise generates a new one. The id is echoed back on the
-    response for client-side correlation.
-    """
-
     def __init__(self, get_response):
         self.get_response = get_response
 

@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 from apps.room.utils.constants import RoomStatus
 from apps.room.models import Room
 from exceptions import RoomInvalidError
@@ -24,9 +25,9 @@ class RoomService:
                 room_type, status,
             )
             raise RoomInvalidError(_("Xona statusi xato"))
-        RoomUtil.get_room_type(room_type)
+        room_type_obj = RoomUtil.get_room_type(room_type)
 
-        return Room.objects.create(room_number=room_number,room_status=status,room_type=room_type)
+        return Room.objects.create(room_number=room_number, status=status, room_type=room_type_obj)
 
     @classmethod
     @transaction.atomic

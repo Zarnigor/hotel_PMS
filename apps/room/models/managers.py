@@ -1,39 +1,20 @@
 from django.db import models
 
-class RoomQuerySet(models.QuerySet):
+
+class SoftDeleteQuerySet(models.QuerySet):
     def alive(self):
-        return self.filter(deleted_at=None)
+        return self.filter(deleted_at__isnull=True)
 
     def dead(self):
-        return self.filter(deleted_at=None)
+        return self.filter(deleted_at__isnull=False)
 
 
-class RoomManager(models.Manager):
+class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return RoomQuerySet(self.model, using=self._db).alive()
+        return SoftDeleteQuerySet(self.model, using=self._db).alive()
 
 
-class RoomTypeBaseQuerySet(models.QuerySet):
-    def alive(self):
-        return self.filter(deleted_at=None)
+class AllObjectsManager(models.Manager):
 
-    def dead(self):
-        return self.filter(deleted_at=None)
-
-
-class RoomTypeBaseManager(models.Manager):
     def get_queryset(self):
-        return RoomTypeBaseQuerySet(self.model, using=self._db).alive()
-
-
-class RoomTypeQuerySet(models.QuerySet):
-    def alive(self):
-        return self.filter(deleted_at=None)
-
-    def dead(self):
-        return self.filter(deleted_at=None)
-
-
-class RoomTypeManager(models.Manager):
-    def get_queryset(self):
-        return RoomTypeQuerySet(self.model, using=self._db).alive()
+        return SoftDeleteQuerySet(self.model, using=self._db)

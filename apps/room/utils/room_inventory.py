@@ -6,7 +6,7 @@ import exceptions
 from apps.room.models import RoomInventory
 from django.utils.translation import gettext_lazy as _
 
-from apps.room.services.room_inventory_service import _date_range
+from apps.room.utils.helpers import date_range as _date_range
 
 logger = logging.getLogger(__name__)
 

@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'apps.room',
     'apps.reservation',
+    'apps.guest',
 ]
 
 MIDDLEWARE = [

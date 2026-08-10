@@ -7,7 +7,9 @@ from apps.reservation.services import cancel_reservation, create_reservation
 from apps.reservation.utils import get_reservation, list_reservations
 from apps.room.models import RoomInventory, RoomType, RoomTypeBase
 from apps.room.services import RoomInventoryService
+from apps.guest.models import Guest
 from exceptions import (
+    GuestNotFoundError,
     InvalidDateRangeError,
     OverbookingError,
     ReservationCancelledError,
@@ -28,53 +30,68 @@ class TestCreateReservation:
         return RoomType.objects.create(room_type_base=room_type_base, name="Standard", base_price=100)
 
     @pytest.fixture
+    def guest(self):
+        return Guest.objects.create(full_name="Ali")
+
+    @pytest.fixture
+    def guest2(self):
+        return Guest.objects.create(full_name="Bob")
+
+    @pytest.fixture
     def date_range(self):
         start = datetime.date.today() + datetime.timedelta(days=1)
         end = start + datetime.timedelta(days=2)
         return start, end
 
-    def test_creates_reservation_and_reserves_inventory(self, room_type, date_range):
+    def test_creates_reservation_and_reserves_inventory(self, room_type, guest, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
 
-        reservation = create_reservation("Ali", room_type.id, check_in, check_out)
+        reservation = create_reservation(guest.id, room_type.id, check_in, check_out)
 
         assert reservation.status == Reservation.Status.PENDING
+        assert reservation.guest_id == guest.id
         rows = RoomInventory.objects.filter(room_type=room_type, date__gte=check_in, date__lt=check_out)
         assert all(row.booked_rooms == 1 for row in rows)
 
-    def test_rejects_invalid_date_range(self, room_type, date_range):
+    def test_rejects_invalid_date_range(self, room_type, guest, date_range):
         check_in, check_out = date_range
 
         with pytest.raises(InvalidDateRangeError):
-            create_reservation("Ali", room_type.id, check_out, check_in)
+            create_reservation(guest.id, room_type.id, check_out, check_in)
 
-    def test_rejects_missing_room_type(self, date_range):
+    def test_rejects_missing_guest(self, room_type, date_range):
+        check_in, check_out = date_range
+
+        with pytest.raises(GuestNotFoundError):
+            create_reservation(-1, room_type.id, check_in, check_out)
+
+    def test_rejects_missing_room_type(self, guest, date_range):
         check_in, check_out = date_range
 
         with pytest.raises(RoomNotFoundError):
-            create_reservation("Ali", -1, check_in, check_out)
+            create_reservation(guest.id, -1, check_in, check_out)
 
-    def test_rejects_deleted_room_type(self, room_type, date_range):
+    def test_rejects_deleted_room_type(self, room_type, guest, date_range):
         check_in, check_out = date_range
         room_type.delete()
 
         with pytest.raises(RoomUnbookableError):
-            create_reservation("Ali", room_type.id, check_in, check_out)
+            create_reservation(guest.id, room_type.id, check_in, check_out)
 
-    def test_rejects_missing_inventory(self, room_type, date_range):
+    def test_rejects_missing_inventory(self, room_type, guest, date_range):
         check_in, check_out = date_range
 
         with pytest.raises(OverbookingError):
-            create_reservation("Ali", room_type.id, check_in, check_out)
+            create_reservation(guest.id, room_type.id, check_in, check_out)
 
-    def test_rejects_overbooking(self, room_type, date_range):
+    def test_rejects_overbooking(self, room_type, guest, guest2, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
-        create_reservation("Ali", room_type.id, check_in, check_out)
+        create_reservation(guest.id, room_type.id, check_in, check_out)
 
         with pytest.raises(OverbookingError):
-            create_reservation("Bob", room_type.id, check_in, check_out)
+            create_reservation(guest2.id, room_type.id, check_in, check_out)
 
 
 @pytest.mark.django_db
@@ -88,16 +105,20 @@ class TestCancelReservation:
         return RoomType.objects.create(room_type_base=room_type_base, name="Standard", base_price=100)
 
     @pytest.fixture
+    def guest(self):
+        return Guest.objects.create(full_name="Ali")
+
+    @pytest.fixture
     def date_range(self):
         start = datetime.date.today() + datetime.timedelta(days=1)
         end = start + datetime.timedelta(days=2)
         return start, end
 
     @pytest.fixture
-    def reservation(self, room_type, date_range):
+    def reservation(self, room_type, guest, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
-        return create_reservation("Ali", room_type.id, check_in, check_out)
+        return create_reservation(guest.id, room_type.id, check_in, check_out)
 
     def test_cancels_reservation_and_releases_inventory(self, reservation, room_type, date_range):
         check_in, check_out = date_range
@@ -130,22 +151,27 @@ class TestReservationReadHelpers:
         return RoomType.objects.create(room_type_base=room_type_base, name="Standard", base_price=100)
 
     @pytest.fixture
+    def guest(self):
+        return Guest.objects.create(full_name="Ali")
+
+    @pytest.fixture
     def date_range(self):
         start = datetime.date.today() + datetime.timedelta(days=1)
         end = start + datetime.timedelta(days=2)
         return start, end
 
     @pytest.fixture
-    def reservation(self, room_type, date_range):
+    def reservation(self, room_type, guest, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
-        return create_reservation("Ali", room_type.id, check_in, check_out)
+        return create_reservation(guest.id, room_type.id, check_in, check_out)
 
-    def test_get_reservation_returns_nested_dict(self, reservation, room_type):
+    def test_get_reservation_returns_nested_dict(self, reservation, room_type, guest):
         data = get_reservation(reservation.id)
 
         assert data["id"] == reservation.id
-        assert data["guest_name"] == "Ali"
+        assert data["guest"]["id"] == guest.id
+        assert data["guest"]["full_name"] == "Ali"
         assert data["room_type"]["id"] == room_type.id
         assert data["assigned_room"] is None
 

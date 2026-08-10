@@ -15,6 +15,12 @@ from .reservation import (
     ReservationCancelledError,
 )
 
+from .guest import (
+    GuestInvalidError,
+    GuestNotFoundError,
+    DuplicatePassportError,
+)
+
 from .handlers import custom_exception_handler
 
 __all__ = [
@@ -23,5 +29,6 @@ __all__ = [
     "RatePlanNotFoundError", "OverbookingError",
     "BookingConflictError", "InvalidDateRangeError",
     "ReservationNotFoundError", "ReservationCancelledError",
+    "GuestInvalidError", "GuestNotFoundError", "DuplicatePassportError",
     "custom_exception_handler",
 ]

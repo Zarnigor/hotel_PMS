@@ -7,6 +7,7 @@ from apps.reservation.models import Reservation
 from apps.reservation.services import create_reservation
 from apps.room.models import RoomType, RoomTypeBase
 from apps.room.services import RoomInventoryService
+from apps.guest.models import Guest
 
 
 @pytest.mark.django_db
@@ -28,36 +29,44 @@ class TestReservationViewSet:
         return RoomType.objects.create(room_type_base=room_type_base, name="Standard", base_price=100)
 
     @pytest.fixture
+    def guest(self):
+        return Guest.objects.create(full_name="Ali")
+
+    @pytest.fixture
+    def guest2(self):
+        return Guest.objects.create(full_name="Bob")
+
+    @pytest.fixture
     def date_range(self):
         start = datetime.date.today() + datetime.timedelta(days=1)
         end = start + datetime.timedelta(days=2)
         return start, end
 
     @pytest.fixture
-    def reservation(self, room_type, date_range):
+    def reservation(self, room_type, guest, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
-        return create_reservation("Ali", room_type.id, check_in, check_out)
+        return create_reservation(guest.id, room_type.id, check_in, check_out)
 
     def test_list_reservations(self, api_client, reservation):
         response = api_client.get("/api/v1/reservations/")
 
         assert response.status_code == 200
         assert response.data["count"] == 1
-        assert response.data["results"][0]["guest_name"] == "Ali"
+        assert response.data["results"][0]["guest"]["full_name"] == "Ali"
 
     def test_retrieve_reservation(self, api_client, reservation):
         response = api_client.get(f"/api/v1/reservations/{reservation.id}/")
 
         assert response.status_code == 200
-        assert response.data["guest_name"] == "Ali"
+        assert response.data["guest"]["full_name"] == "Ali"
         assert response.data["assigned_room"] is None
 
-    def test_create_reservation(self, api_client, room_type, date_range):
+    def test_create_reservation(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
         payload = {
-            "guest_name": "Bob",
+            "guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),
@@ -66,13 +75,13 @@ class TestReservationViewSet:
         response = api_client.post("/api/v1/reservations/", payload, format="json")
 
         assert response.status_code == 201
-        assert response.data["guest_name"] == "Bob"
+        assert response.data["guest"]["full_name"] == "Bob"
         assert response.data["status"] == Reservation.Status.PENDING
 
-    def test_create_reservation_rejects_invalid_date_range(self, api_client, room_type, date_range):
+    def test_create_reservation_rejects_invalid_date_range(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         payload = {
-            "guest_name": "Bob",
+            "guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_out),
             "check_out_date": str(check_in),
@@ -82,11 +91,24 @@ class TestReservationViewSet:
 
         assert response.status_code == 400
 
-    def test_create_reservation_propagates_overbooking_as_409(self, api_client, room_type, date_range):
+    def test_create_reservation_rejects_missing_guest(self, api_client, room_type, date_range):
+        check_in, check_out = date_range
+        payload = {
+            "guest": 999999,
+            "room_type": room_type.id,
+            "check_in_date": str(check_in),
+            "check_out_date": str(check_out),
+        }
+
+        response = api_client.post("/api/v1/reservations/", payload, format="json")
+
+        assert response.status_code == 400
+
+    def test_create_reservation_propagates_overbooking_as_409(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
         payload = {
-            "guest_name": "Bob",
+            "guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),

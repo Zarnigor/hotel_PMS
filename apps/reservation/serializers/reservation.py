@@ -7,11 +7,13 @@ from rest_framework import serializers
 from apps.reservation.models import Reservation
 from apps.reservation.services import create_reservation, cancel_reservation
 from apps.room.serializers import RoomTypeShortSerializer, AssignedRoomShortSerializer
+from apps.guest.models import Guest
+from apps.guest.serializers import GuestShortSerializer
 
 
 class ReservationListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    guest_name = serializers.CharField()
+    guest = GuestShortSerializer()
     room_type = RoomTypeShortSerializer()
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
@@ -20,7 +22,7 @@ class ReservationListSerializer(serializers.Serializer):
 
 class ReservationDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    guest_name = serializers.CharField()
+    guest = GuestShortSerializer()
     room_type = RoomTypeShortSerializer()
     assigned_room = AssignedRoomShortSerializer(allow_null=True)
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
@@ -29,9 +31,11 @@ class ReservationDetailSerializer(serializers.Serializer):
 
 
 class ReservationWriteSerializer(serializers.ModelSerializer):
+    guest = serializers.PrimaryKeyRelatedField(queryset=Guest.objects.all())
+
     class Meta:
         model = Reservation
-        fields = ['guest_name', 'room_type', 'check_in_date', 'check_out_date']
+        fields = ['guest', 'room_type', 'check_in_date', 'check_out_date']
 
     def validate(self, attrs):
         check_in = attrs.get('check_in_date')
@@ -45,7 +49,7 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return create_reservation(
-            guest_name=validated_data['guest_name'],
+            guest_id=validated_data['guest'].id,
             room_type_id=validated_data['room_type'].id,
             check_in_date=validated_data['check_in_date'],
             check_out_date=validated_data['check_out_date'],

@@ -2,6 +2,7 @@ import datetime
 import pytest
 from apps.reservation.models import Reservation
 from apps.room.models import RoomType, RoomTypeBase
+from apps.guest.models import Guest
 
 
 @pytest.mark.django_db
@@ -15,16 +16,20 @@ class TestReservationModel:
         return RoomType.objects.create(room_type_base=room_type_base, name="Standard", base_price=100)
 
     @pytest.fixture
-    def reservation(self, room_type):
+    def guest(self):
+        return Guest.objects.create(full_name="Ali")
+
+    @pytest.fixture
+    def reservation(self, room_type, guest):
         return Reservation.objects.create(
-            guest_name="Ali",
+            guest=guest,
             room_type=room_type,
             check_in_date=datetime.date.today() + datetime.timedelta(days=1),
             check_out_date=datetime.date.today() + datetime.timedelta(days=3),
         )
 
-    def test_create_reservation(self, reservation):
-        assert reservation.guest_name == "Ali"
+    def test_create_reservation(self, reservation, guest):
+        assert reservation.guest == guest
         assert reservation.assigned_room is None
         assert reservation.created_at is not None
 

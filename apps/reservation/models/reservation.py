@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.room.models import RoomType, Room
+from apps.guest.models import Guest
 
 
 class Reservation(models.Model):
@@ -11,7 +12,7 @@ class Reservation(models.Model):
         CHECKED_OUT = "checked_out", _("Checked out")
         CANCELLED = "cancelled", _("Cancelled")
 
-    guest_name = models.CharField(max_length=25)
+    guest = models.ForeignKey(Guest, on_delete=models.PROTECT, related_name="reservations")
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     assigned_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
     check_in_date = models.DateField()
@@ -23,4 +24,4 @@ class Reservation(models.Model):
         db_table = 'reservations'
 
     def __str__(self):
-        return self.guest_name
+        return self.guest.full_name

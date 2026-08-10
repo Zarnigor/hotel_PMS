@@ -8,6 +8,7 @@ from django.db.models import F
 
 from apps.reservation.models import Reservation
 from apps.room.models import RoomType, RoomInventory
+from apps.guest.utils import GuestUtil
 from apps.reservation.utils.helpers import validate_date_range
 from exceptions import (
     BaseAppException,
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 @transaction.atomic
 def create_reservation(
-    guest_name: str,
+    guest_id: int,
     room_type_id: int,
     check_in_date: date,
     check_out_date: date,
@@ -32,18 +33,23 @@ def create_reservation(
 
     Raises:
         InvalidDateRangeError: Sana oralig'i noto'g'ri bo'lsa.
+        GuestNotFoundError: Guest topilmasa.
         RoomNotFoundError: RoomType topilmasa.
         RoomUnbookableError: RoomType o'chirilgan (is_deleted=True) bo'lsa.
         OverbookingError: Tanlangan kunlardan biri uchun bo'sh xona qolmasa.
     """
-    # guest_name is PII — never logged, reservation_id/room_type_id are used
-    # as correlators instead.
+    # guest_id — bu shaxsni bevosita ochib bermaydigan (PII bo'lmagan) ID,
+    # shuning uchun boshqa correlator'lar qatorida bemalol loglanadi.
     logger.info(
-        "create_reservation start room_type_id=%s check_in_date=%s check_out_date=%s",
-        room_type_id, check_in_date, check_out_date,
+        "create_reservation start guest_id=%s room_type_id=%s check_in_date=%s check_out_date=%s",
+        guest_id, room_type_id, check_in_date, check_out_date,
     )
     try:
         validate_date_range(check_in_date, check_out_date)
+
+        # GuestNotFoundError'ni shu yerda ko'tarish uchun — mavjud bo'lmagan
+        # guest_id bilan reservation yaratilmasligini ta'minlaydi.
+        GuestUtil.get_guest(guest_id)
 
         try:
             room_type = RoomType.all_objects.get(pk=room_type_id)
@@ -98,7 +104,7 @@ def create_reservation(
         inventory_qs.update(booked_rooms=F("booked_rooms") + 1)
 
         reservation = Reservation.objects.create(
-            guest_name=guest_name,
+            guest_id=guest_id,
             room_type_id=room_type_id,
             check_in_date=check_in_date,
             check_out_date=check_out_date,
@@ -108,8 +114,8 @@ def create_reservation(
         raise
     except Exception:
         logger.error(
-            "create_reservation failed unexpectedly room_type_id=%s check_in_date=%s check_out_date=%s",
-            room_type_id, check_in_date, check_out_date, exc_info=True,
+            "create_reservation failed unexpectedly guest_id=%s room_type_id=%s check_in_date=%s check_out_date=%s",
+            guest_id, room_type_id, check_in_date, check_out_date, exc_info=True,
         )
         raise
 

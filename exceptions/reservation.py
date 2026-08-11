@@ -23,3 +23,9 @@ class ReservationCancelledError(BaseAppException):
     status_code = 400
     default_message = _("Bu bron allaqachon bekor qilingan")
     error_code = _("reservation_cancelled")
+
+
+class OccupancyExceededError(BaseAppException):
+    status_code = 400
+    default_message = _("Mehmonlar soni xona sig'imidan oshib ketdi")
+    error_code = _("occupancy_exceeded")

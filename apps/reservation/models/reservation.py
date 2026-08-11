@@ -17,6 +17,7 @@ class Reservation(models.Model):
     assigned_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
     check_in_date = models.DateField()
     check_out_date = models.DateField()
+    guest_count = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 

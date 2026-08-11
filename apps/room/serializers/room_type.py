@@ -17,6 +17,7 @@ class RoomTypeSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "base_price",
+            "max_occupancy",
         ]
         read_only_fields = ["id"]
 
@@ -47,6 +48,7 @@ class RoomTypeWriteSerializer(serializers.ModelSerializer):
             "room_type_base",
             "name",
             "base_price",
+            "max_occupancy",
         ]
         read_only_fields = ["id"]
 
@@ -57,6 +59,13 @@ class RoomTypeWriteSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate_max_occupancy(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                _("max_occupancy 0 dan katta bo'lishi kerak.")
+            )
+        return value
+
     def create(self, validated_data: dict) -> RoomType:
         from apps.room.services import RoomTypeService
 
@@ -64,4 +73,5 @@ class RoomTypeWriteSerializer(serializers.ModelSerializer):
             room_type_base_id=validated_data["room_type_base"].id,
             name=validated_data["name"],
             base_price=validated_data["base_price"],
+            max_occupancy=validated_data.get("max_occupancy", 2),
         )

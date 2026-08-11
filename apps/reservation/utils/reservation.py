@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 _BASE_SELECT = """
     SELECT
-        r.id, r.check_in_date, r.check_out_date,
+        r.id, r.check_in_date, r.check_out_date, r.guest_count,
         r.status, r.created_at,
         g.id AS guest__id, g.full_name AS guest__full_name,
         rt.id AS room_type__id, rt.name AS room_type__name, rt.base_price AS room_type__base_price,

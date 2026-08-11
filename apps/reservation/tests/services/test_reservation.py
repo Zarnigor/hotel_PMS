@@ -11,6 +11,7 @@ from apps.guest.models import Guest
 from exceptions import (
     GuestNotFoundError,
     InvalidDateRangeError,
+    OccupancyExceededError,
     OverbookingError,
     ReservationCancelledError,
     ReservationNotFoundError,
@@ -92,6 +93,54 @@ class TestCreateReservation:
 
         with pytest.raises(OverbookingError):
             create_reservation(guest2.id, room_type.id, check_in, check_out)
+
+    def test_accepts_guest_count_within_max_occupancy(self, room_type, guest, date_range):
+        check_in, check_out = date_range
+        RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
+
+        reservation = create_reservation(
+            guest.id, room_type.id, check_in, check_out, guest_count=room_type.max_occupancy
+        )
+
+        assert reservation.guest_count == room_type.max_occupancy
+
+    def test_rejects_guest_count_exceeding_max_occupancy(self, room_type, guest, date_range):
+        check_in, check_out = date_range
+        RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=2)
+
+        with pytest.raises(OccupancyExceededError):
+            create_reservation(
+                guest.id, room_type.id, check_in, check_out, guest_count=room_type.max_occupancy + 1
+            )
+
+        # occupancy tekshiruvi inventory'ni o'zgartirmasligi kerak — rad etilgan urinish
+        # bo'sh xonalar sonini kamaytirmaydi.
+        rows = RoomInventory.objects.filter(room_type=room_type, date__gte=check_in, date__lt=check_out)
+        assert all(row.booked_rooms == 0 for row in rows)
+
+    def test_overbooking_check_still_raised_when_guest_count_is_valid(
+        self, room_type, guest, guest2, date_range
+    ):
+        """Occupancy tekshiruvi qo'shilgani OverbookingError'ni bosib qolmasligini tasdiqlaydi —
+        guest_count limit ichida bo'lsa ham, bo'sh xona qolmasa OverbookingError chiqishi kerak."""
+        check_in, check_out = date_range
+        RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
+        create_reservation(guest.id, room_type.id, check_in, check_out, guest_count=1)
+
+        with pytest.raises(OverbookingError):
+            create_reservation(guest2.id, room_type.id, check_in, check_out, guest_count=1)
+
+    def test_overbooking_takes_precedence_over_occupancy_check(self, room_type, guest, guest2, date_range):
+        """Ikkala shart ham buzilganda (bo'sh xona yo'q va guest_count limitdan oshgan),
+        avval OverbookingError ko'tariladi — ikkita tekshiruv bir-biriga xalaqit bermaydi."""
+        check_in, check_out = date_range
+        RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
+        create_reservation(guest.id, room_type.id, check_in, check_out, guest_count=1)
+
+        with pytest.raises(OverbookingError):
+            create_reservation(
+                guest2.id, room_type.id, check_in, check_out, guest_count=room_type.max_occupancy + 1
+            )
 
 
 @pytest.mark.django_db

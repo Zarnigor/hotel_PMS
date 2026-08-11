@@ -104,6 +104,23 @@ class TestReservationViewSet:
 
         assert response.status_code == 400
 
+    def test_create_reservation_propagates_occupancy_exceeded_as_400(
+        self, api_client, room_type, guest2, date_range
+    ):
+        check_in, check_out = date_range
+        RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
+        payload = {
+            "guest": guest2.id,
+            "room_type": room_type.id,
+            "check_in_date": str(check_in),
+            "check_out_date": str(check_out),
+            "guest_count": room_type.max_occupancy + 1,
+        }
+
+        response = api_client.post("/api/v1/reservations/", payload, format="json")
+
+        assert response.status_code == 400
+
     def test_create_reservation_propagates_overbooking_as_409(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)

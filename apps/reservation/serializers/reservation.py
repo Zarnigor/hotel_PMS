@@ -18,6 +18,7 @@ class ReservationListSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
     check_out_date = serializers.DateField()
+    guest_count = serializers.IntegerField()
 
 
 class ReservationDetailSerializer(serializers.Serializer):
@@ -28,6 +29,7 @@ class ReservationDetailSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Reservation.Status.choices)
     check_in_date = serializers.DateField()
     check_out_date = serializers.DateField()
+    guest_count = serializers.IntegerField()
 
 
 class ReservationWriteSerializer(serializers.ModelSerializer):
@@ -35,7 +37,7 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ['guest', 'room_type', 'check_in_date', 'check_out_date']
+        fields = ['guest', 'room_type', 'check_in_date', 'check_out_date', 'guest_count']
 
     def validate(self, attrs):
         check_in = attrs.get('check_in_date')
@@ -53,6 +55,7 @@ class ReservationWriteSerializer(serializers.ModelSerializer):
             room_type_id=validated_data['room_type'].id,
             check_in_date=validated_data['check_in_date'],
             check_out_date=validated_data['check_out_date'],
+            guest_count=validated_data.get('guest_count', 1),
         )
 
     def to_representation(self, instance):

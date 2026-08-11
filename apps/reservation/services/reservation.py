@@ -12,6 +12,7 @@ from apps.guest.utils import GuestUtil
 from apps.reservation.utils.helpers import validate_date_range
 from exceptions import (
     BaseAppException,
+    OccupancyExceededError,
     OverbookingError,
     ReservationCancelledError,
     ReservationNotFoundError,
@@ -28,6 +29,7 @@ def create_reservation(
     room_type_id: int,
     check_in_date: date,
     check_out_date: date,
+    guest_count: int = 1,
 ) -> Reservation:
     """Yangi reservation yaratadi, RoomInventory'ni lock qilib overbookingdan himoyalaydi.
 
@@ -37,12 +39,14 @@ def create_reservation(
         RoomNotFoundError: RoomType topilmasa.
         RoomUnbookableError: RoomType o'chirilgan (is_deleted=True) bo'lsa.
         OverbookingError: Tanlangan kunlardan biri uchun bo'sh xona qolmasa.
+        OccupancyExceededError: guest_count room_type.max_occupancy'dan katta bo'lsa.
     """
     # guest_id — bu shaxsni bevosita ochib bermaydigan (PII bo'lmagan) ID,
     # shuning uchun boshqa correlator'lar qatorida bemalol loglanadi.
     logger.info(
-        "create_reservation start guest_id=%s room_type_id=%s check_in_date=%s check_out_date=%s",
-        guest_id, room_type_id, check_in_date, check_out_date,
+        "create_reservation start guest_id=%s room_type_id=%s check_in_date=%s check_out_date=%s "
+        "guest_count=%s",
+        guest_id, room_type_id, check_in_date, check_out_date, guest_count,
     )
     try:
         validate_date_range(check_in_date, check_out_date)
@@ -97,6 +101,17 @@ def create_reservation(
                 )
                 raise OverbookingError(f"{row.date} kuni bo'sh xona qolmagan")
 
+        if guest_count > room_type.max_occupancy:
+            logger.warning(
+                "create_reservation rejected reason=occupancy_exceeded room_type_id=%s "
+                "guest_count=%s max_occupancy=%s",
+                room_type_id, guest_count, room_type.max_occupancy,
+            )
+            raise OccupancyExceededError(
+                f"Mehmonlar soni ({guest_count}) xona sig'imidan "
+                f"({room_type.max_occupancy}) oshib ketdi"
+            )
+
         logger.debug(
             "create_reservation F() update room_type_id=%s row_count=%s",
             room_type_id, len(inventory_rows),
@@ -108,6 +123,7 @@ def create_reservation(
             room_type_id=room_type_id,
             check_in_date=check_in_date,
             check_out_date=check_out_date,
+            guest_count=guest_count,
             status=Reservation.Status.PENDING,
         )
     except BaseAppException:

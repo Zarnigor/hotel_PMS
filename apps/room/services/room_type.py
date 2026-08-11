@@ -50,6 +50,7 @@ class RoomTypeService:
         room_type_base_id: int,
         name: str,
         base_price: Decimal,
+        max_occupancy: int = 2,
     ) -> RoomType:
         """Create a new room type object.
 
@@ -63,12 +64,19 @@ class RoomTypeService:
                 room_type_base_id, base_price,
             )
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
+        if max_occupancy is None or max_occupancy <= 0:
+            logger.warning(
+                "create_room_type rejected reason=invalid_max_occupancy room_type_base_id=%s max_occupancy=%s",
+                room_type_base_id, max_occupancy,
+            )
+            raise RoomInvalidError(_("max_occupancy 0 dan katta bo'lishi kerak."))
 
         RoomUtil.get_room_type_base(room_type_base_id)
         room_type = RoomType.objects.create(
             room_type_base_id=room_type_base_id,
             name=name,
             base_price=base_price,
+            max_occupancy=max_occupancy,
         )
 
         today = date.today()
@@ -105,13 +113,19 @@ class RoomTypeService:
     def update_room_type(cls, room_type_id: int, **fields) -> RoomType:
         """Update a room type object. Get the type from base class"""
         room_type = RoomUtil.get_room_type(room_type_id)
-        allowed = {"name", "base_price", "room_type_base_id"}
+        allowed = {"name", "base_price", "room_type_base_id", "max_occupancy"}
         if "base_price" in fields and fields["base_price"] is not None and fields["base_price"] < 0:
             logger.warning(
                 "update_room_type rejected reason=negative_base_price room_type_id=%s base_price=%s",
                 room_type_id, fields["base_price"],
             )
             raise RoomInvalidError(_("base_price manfiy bo'lishi mumkin emas."))
+        if "max_occupancy" in fields and fields["max_occupancy"] is not None and fields["max_occupancy"] <= 0:
+            logger.warning(
+                "update_room_type rejected reason=invalid_max_occupancy room_type_id=%s max_occupancy=%s",
+                room_type_id, fields["max_occupancy"],
+            )
+            raise RoomInvalidError(_("max_occupancy 0 dan katta bo'lishi kerak."))
         for key, value in fields.items():
             if key in allowed:
                 setattr(room_type, key, value)

@@ -1,26 +1,3 @@
-"""
-Management command: seed_fake_data
-
-Joylashuv: apps/management/commands/seed_fake_data.py
-
-Katalog (spravochnik) ma'lumotlari — belgilangan, cheklangan hajmda:
-    - RoomTypeBase   (~100 ta aniq, noyob kategoriya)
-    - RoomType       (aniq xona turlari, bazaviy kategoriya + wing bilan noyob nom)
-
-Tranzaksion ma'lumotlar — --count orqali boshqariladi (masalan 1_000_000):
-    - Room
-    - RoomInventory
-    - Guest
-    - Reservation
-
-Ishlatish:
-    python manage.py seed_fake_data
-    python manage.py seed_fake_data --count 1000000
-    python manage.py seed_fake_data --count 1000000 --flush   # avval eski fake datalarni tozalaydi
-
-Talab: pip install Faker
-"""
-
 import itertools
 import random
 from datetime import timedelta
@@ -213,13 +190,28 @@ class Command(BaseCommand):
     def _seed_guests(self, count):
         self.stdout.write(f"Guest yaratilmoqda ({count} ta)...")
 
+        # fake.unique faqat shu process ichida noyoblikni kafolatlaydi va DB'dagi
+        # mavjud passportlardan xabarsiz. --flush'siz qayta ishga tushirilganda
+        # eski yozuvlar bilan to'qnashib, IntegrityError berishi mumkin edi —
+        # shuning uchun DB'dagi mavjud passportlarni oldindan "band" deb belgilaymiz.
+        used_passports = set(
+            Guest.objects.exclude(passport="").values_list("passport", flat=True)
+        )
+
+        def next_passport():
+            while True:
+                candidate = fake.bothify(text="??######").upper()
+                if candidate not in used_passports:
+                    used_passports.add(candidate)
+                    return candidate
+
         def gen():
             for _ in range(count):
                 yield Guest(
                     full_name=fake.name()[:100].strip(),
                     country=fake.country()[:100],
                     birthday=fake.date_of_birth(minimum_age=18, maximum_age=90),
-                    passport=fake.unique.bothify(text="??######").upper(),
+                    passport=next_passport(),
                 )
 
         chunked_bulk_create(Guest, gen(), label="Guest")
@@ -237,7 +229,7 @@ class Command(BaseCommand):
                 check_in = today + timedelta(days=random.randint(-10, 90))
                 check_out = check_in + timedelta(days=random.randint(1, 14))
                 yield Reservation(
-                    guest=guests[random.randrange(guests_count)],
+                    primary_guest=guests[random.randrange(guests_count)],
                     room_type=random.choice(room_types),
                     assigned_room=rooms[random.randrange(rooms_count)] if random.random() > 0.2 else None,
                     check_in_date=check_in,

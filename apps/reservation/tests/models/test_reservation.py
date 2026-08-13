@@ -22,14 +22,14 @@ class TestReservationModel:
     @pytest.fixture
     def reservation(self, room_type, guest):
         return Reservation.objects.create(
-            guest=guest,
+            primary_guest=guest,
             room_type=room_type,
             check_in_date=datetime.date.today() + datetime.timedelta(days=1),
             check_out_date=datetime.date.today() + datetime.timedelta(days=3),
         )
 
     def test_create_reservation(self, reservation, guest):
-        assert reservation.guest == guest
+        assert reservation.primary_guest == guest
         assert reservation.assigned_room is None
         assert reservation.created_at is not None
 

@@ -14,6 +14,8 @@ from .reservation import (
     ReservationNotFoundError,
     ReservationCancelledError,
     OccupancyExceededError,
+    ReservationInvalidStateError,
+    RoomNotAssignedError,
 )
 
 from .guest import (
@@ -30,6 +32,7 @@ __all__ = [
     "RatePlanNotFoundError", "OverbookingError",
     "BookingConflictError", "InvalidDateRangeError",
     "ReservationNotFoundError", "ReservationCancelledError", "OccupancyExceededError",
+    "ReservationInvalidStateError", "RoomNotAssignedError",
     "GuestInvalidError", "GuestNotFoundError", "DuplicatePassportError",
     "custom_exception_handler",
 ]

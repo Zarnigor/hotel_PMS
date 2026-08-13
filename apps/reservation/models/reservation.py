@@ -12,7 +12,7 @@ class Reservation(models.Model):
         CHECKED_OUT = "checked_out", _("Checked out")
         CANCELLED = "cancelled", _("Cancelled")
 
-    guest = models.ForeignKey(Guest, on_delete=models.PROTECT, related_name="reservations")
+    primary_guest = models.ForeignKey(Guest, on_delete=models.PROTECT, related_name="reservations")
     room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT)
     assigned_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
     check_in_date = models.DateField()
@@ -25,4 +25,4 @@ class Reservation(models.Model):
         db_table = 'reservations'
 
     def __str__(self):
-        return self.guest.full_name
+        return self.primary_guest.full_name

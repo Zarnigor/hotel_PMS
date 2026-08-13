@@ -21,7 +21,6 @@ class RoomTypeBaseSerializer(serializers.ModelSerializer):
 
 
 class RoomTypeBaseCreateUpdateSerializer(serializers.ModelSerializer):
-    """Create/update uchun alohida serializer — deleted_at ko'rsatilmaydi."""
 
     class Meta:
         model = RoomTypeBase

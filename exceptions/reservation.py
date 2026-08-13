@@ -29,3 +29,15 @@ class OccupancyExceededError(BaseAppException):
     status_code = 400
     default_message = _("Mehmonlar soni xona sig'imidan oshib ketdi")
     error_code = _("occupancy_exceeded")
+
+
+class ReservationInvalidStateError(BaseAppException):
+    status_code = 400
+    default_message = _("Reservation bu amal uchun noto'g'ri holatda")
+    error_code = _("reservation_invalid_state")
+
+
+class RoomNotAssignedError(BaseAppException):
+    status_code = 400
+    default_message = _("Reservationga xona biriktirilmagan — avval xona belgilang")
+    error_code = _("room_not_assigned")

@@ -53,20 +53,20 @@ class TestReservationViewSet:
 
         assert response.status_code == 200
         assert response.data["count"] == 1
-        assert response.data["results"][0]["guest"]["full_name"] == "Ali"
+        assert response.data["results"][0]["primary_guest"]["full_name"] == "Ali"
 
     def test_retrieve_reservation(self, api_client, reservation):
         response = api_client.get(f"/api/v1/reservations/{reservation.id}/")
 
         assert response.status_code == 200
-        assert response.data["guest"]["full_name"] == "Ali"
+        assert response.data["primary_guest"]["full_name"] == "Ali"
         assert response.data["assigned_room"] is None
 
     def test_create_reservation(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
         payload = {
-            "guest": guest2.id,
+            "primary_guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),
@@ -75,13 +75,13 @@ class TestReservationViewSet:
         response = api_client.post("/api/v1/reservations/", payload, format="json")
 
         assert response.status_code == 201
-        assert response.data["guest"]["full_name"] == "Bob"
+        assert response.data["primary_guest"]["full_name"] == "Bob"
         assert response.data["status"] == Reservation.Status.PENDING
 
     def test_create_reservation_rejects_invalid_date_range(self, api_client, room_type, guest2, date_range):
         check_in, check_out = date_range
         payload = {
-            "guest": guest2.id,
+            "primary_guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_out),
             "check_out_date": str(check_in),
@@ -94,7 +94,7 @@ class TestReservationViewSet:
     def test_create_reservation_rejects_missing_guest(self, api_client, room_type, date_range):
         check_in, check_out = date_range
         payload = {
-            "guest": 999999,
+            "primary_guest": 999999,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),
@@ -110,7 +110,7 @@ class TestReservationViewSet:
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
         payload = {
-            "guest": guest2.id,
+            "primary_guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),
@@ -125,7 +125,7 @@ class TestReservationViewSet:
         check_in, check_out = date_range
         RoomInventoryService.generate_for_date_range(room_type.id, check_in, check_out, total_rooms=1)
         payload = {
-            "guest": guest2.id,
+            "primary_guest": guest2.id,
             "room_type": room_type.id,
             "check_in_date": str(check_in),
             "check_out_date": str(check_out),

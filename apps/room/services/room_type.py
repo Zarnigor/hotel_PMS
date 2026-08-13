@@ -18,7 +18,6 @@ INVENTORY_HORIZON_DAYS = 365
 class RoomTypeService:
     @staticmethod
     def create_base(name: str, description: str = "") -> RoomTypeBase:
-        """Create a new room type object."""
         if not name:
             logger.warning("create_base rejected reason=empty_name")
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
@@ -27,7 +26,6 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def update_base(cls, room_type_base_id: int, **fields) -> RoomTypeBase:
-        """Update a room type object."""
         base = RoomUtil.get_room_type_base(room_type_base_id)
         allowed = {"name", "description"}
         for key, value in fields.items():
@@ -39,9 +37,8 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def delete_base(cls, room_type_base_id: int) -> None:
-        """Delete a room type object by room_type_base_id."""
         base = RoomUtil.get_room_type_base(room_type_base_id)
-        base.delete() # TO DO: soft delete kerak
+        base.delete()
         logger.info("delete_base success room_type_base_id=%s", room_type_base_id)
 
     @staticmethod
@@ -52,9 +49,6 @@ class RoomTypeService:
         base_price: Decimal,
         max_occupancy: int = 2,
     ) -> RoomType:
-        """Create a new room type object.
-
-        Get the type from base class. Checks the name and base_price isnot empty."""
         if not name:
             logger.warning("create_room_type rejected reason=empty_name room_type_base_id=%s", room_type_base_id)
             raise RoomInvalidError(_("name bo'sh bo'lishi mumkin emas."))
@@ -111,7 +105,6 @@ class RoomTypeService:
     @classmethod
     @transaction.atomic
     def update_room_type(cls, room_type_id: int, **fields) -> RoomType:
-        """Update a room type object. Get the type from base class"""
         room_type = RoomUtil.get_room_type(room_type_id)
         allowed = {"name", "base_price", "room_type_base_id", "max_occupancy"}
         if "base_price" in fields and fields["base_price"] is not None and fields["base_price"] < 0:

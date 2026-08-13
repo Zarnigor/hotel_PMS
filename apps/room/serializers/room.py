@@ -6,12 +6,6 @@ from apps.room.serializers import RoomTypeShortSerializer
 
 
 class RoomSerializer(serializers.ModelSerializer):
-    """Room modelini o'qish (read) uchun serializer.
-
-    `room_type` maydoni nested holda RoomTypeShortSerializer bilan
-    ko'rsatiladi. Soft-delete maydoni faqat read-only.
-    """
-
     room_type = RoomTypeShortSerializer(read_only=True)
     status_display = serializers.CharField(
         source="get_status_display", read_only=True
@@ -34,13 +28,6 @@ class RoomSerializer(serializers.ModelSerializer):
 
 
 class RoomWriteSerializer(serializers.ModelSerializer):
-    """Room yaratish va yangilash (create/update) uchun serializer.
-
-    `room_type` bu yerda PrimaryKeyRelatedField sifatida qabul
-    qilinadi, soft-delete qilingan
-    RoomType'larni tanlashning oldini olish uchun queryset
-    manager orqali filterlanadi.
-    """
 
     room_type = serializers.PrimaryKeyRelatedField(
         queryset=RoomType.objects.filter(deleted_at__isnull=True)
@@ -78,13 +65,6 @@ class RoomWriteSerializer(serializers.ModelSerializer):
 
 
 class AssignedRoomShortSerializer(serializers.Serializer):
-    """Selectordan kelgan nested assigned_room dict yoki Room ORM obyekti uchun.
-
-    Selector (raw SQL) `number` kalitli dict qaytaradi, ORM oqimlar
-    (masalan reservation cancel/create) esa haqiqiy `Room` obyektini —
-    u yerda maydon nomi `room_number`. Shu farqni hisobga olish uchun
-    `number` maydoni ikkala manbadan ham o'qiy oladigan qilib yozilgan.
-    """
     id = serializers.IntegerField()
     number = serializers.SerializerMethodField()
 

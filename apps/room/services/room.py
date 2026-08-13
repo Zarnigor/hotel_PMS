@@ -32,11 +32,6 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def change_status(cls, room_id: int, new_status: str) -> Room:
-        """Change the status of the room by room_id.
-            Firstly verifies that the new_status is acceptable from room.status
-        """
-
-
         logger.info("change_status start room_id=%s new_status=%s", room_id, new_status)
         if new_status not in RoomStatus.CHOICES:
             logger.warning(
@@ -64,8 +59,6 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def update_room(cls, room_id: int, **fields) -> Room:
-        """Update the room by room_id"""
-
         room = RoomUtil.get_room(room_id)
         allowed = {"room_number", "room_type_id"}
         for key, value in fields.items():
@@ -77,8 +70,6 @@ class RoomService:
     @classmethod
     @transaction.atomic
     def delete_room(cls, room_id: int) -> None:
-        """Delete the room by room_id"""
-
         room = RoomUtil.get_room(room_id)
         room.delete()
         logger.info("delete_room success room_id=%s", room_id)

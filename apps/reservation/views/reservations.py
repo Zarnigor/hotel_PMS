@@ -16,7 +16,6 @@ from apps.room.utils.helpers import tagged_viewset_schema
 
 @tagged_viewset_schema('Reservation', {'cancel'})
 class ReservationViewSet(viewsets.ModelViewSet):
-    """Reservation'lar uchun list/retrieve/create + cancel action."""
 
     queryset = Reservation.objects.select_related('room_type', 'assigned_room').all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
@@ -33,7 +32,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
-        """Reservationni bekor qilish — inventory bo'shatiladi."""
         serializer = ReservationCancelSerializer(
             data={}, context={'reservation_id': pk}
         )

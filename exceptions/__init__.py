@@ -13,6 +13,15 @@ from .reservation import (
     InvalidDateRangeError,
     ReservationNotFoundError,
     ReservationCancelledError,
+    OccupancyExceededError,
+    ReservationInvalidStateError,
+    RoomNotAssignedError,
+)
+
+from .guest import (
+    GuestInvalidError,
+    GuestNotFoundError,
+    DuplicatePassportError,
 )
 
 from .handlers import custom_exception_handler
@@ -22,6 +31,8 @@ __all__ = [
     "RoomInvalidError", "RoomNotFoundError", "RoomUnbookableError",
     "RatePlanNotFoundError", "OverbookingError",
     "BookingConflictError", "InvalidDateRangeError",
-    "ReservationNotFoundError", "ReservationCancelledError",
+    "ReservationNotFoundError", "ReservationCancelledError", "OccupancyExceededError",
+    "ReservationInvalidStateError", "RoomNotAssignedError",
+    "GuestInvalidError", "GuestNotFoundError", "DuplicatePassportError",
     "custom_exception_handler",
 ]

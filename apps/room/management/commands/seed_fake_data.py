@@ -1,25 +1,3 @@
-"""
-Management command: seed_fake_data
-
-Joylashuv: apps/management/commands/seed_fake_data.py
-
-Katalog (spravochnik) ma'lumotlari — belgilangan, cheklangan hajmda:
-    - RoomTypeBase   (~100 ta aniq, noyob kategoriya)
-    - RoomType       (aniq xona turlari, bazaviy kategoriya + wing bilan noyob nom)
-
-Tranzaksion ma'lumotlar — --count orqali boshqariladi (masalan 1_000_000):
-    - Room
-    - RoomInventory
-    - Reservation
-
-Ishlatish:
-    python manage.py seed_fake_data
-    python manage.py seed_fake_data --count 1000000
-    python manage.py seed_fake_data --count 1000000 --flush   # avval eski fake datalarni tozalaydi
-
-Talab: pip install Faker
-"""
-
 import itertools
 import random
 from datetime import timedelta
@@ -33,6 +11,7 @@ from faker import Faker
 
 from apps.room.models import RoomTypeBase, RoomType, Room, RoomInventory
 from apps.reservation.models import Reservation
+from apps.guest.models import Guest
 
 fake = Faker()
 
@@ -105,6 +84,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Eski data tozalanmoqda..."))
             with transaction.atomic():
                 Reservation.objects.all().delete()
+                Guest.objects.all().delete()
                 RoomInventory.objects.all().delete()
                 Room.all_objects.all().delete()
                 RoomType.all_objects.all().delete()
@@ -117,11 +97,12 @@ class Command(BaseCommand):
 
         rooms = self._seed_rooms(count, room_types)
         self._seed_room_inventory(count, room_types)
-        self._seed_reservations(count, room_types, rooms)
+        guests = self._seed_guests(count)
+        self._seed_reservations(count, room_types, rooms, guests)
 
         self.stdout.write(self.style.SUCCESS(
             f"Tayyor: {len(room_type_bases)} ta RoomTypeBase, {len(room_types)} ta RoomType, "
-            f"{count} tagacha Room/RoomInventory/Reservation yaratildi."
+            f"{count} tagacha Room/RoomInventory/Guest/Reservation yaratildi."
         ))
 
     def _seed_room_type_bases(self):
@@ -206,18 +187,49 @@ class Command(BaseCommand):
 
         chunked_bulk_create(RoomInventory, gen(), label="RoomInventory")
 
-    def _seed_reservations(self, count, room_types, rooms):
+    def _seed_guests(self, count):
+        self.stdout.write(f"Guest yaratilmoqda ({count} ta)...")
+
+        # fake.unique faqat shu process ichida noyoblikni kafolatlaydi va DB'dagi
+        # mavjud passportlardan xabarsiz. --flush'siz qayta ishga tushirilganda
+        # eski yozuvlar bilan to'qnashib, IntegrityError berishi mumkin edi —
+        # shuning uchun DB'dagi mavjud passportlarni oldindan "band" deb belgilaymiz.
+        used_passports = set(
+            Guest.objects.exclude(passport="").values_list("passport", flat=True)
+        )
+
+        def next_passport():
+            while True:
+                candidate = fake.bothify(text="??######").upper()
+                if candidate not in used_passports:
+                    used_passports.add(candidate)
+                    return candidate
+
+        def gen():
+            for _ in range(count):
+                yield Guest(
+                    full_name=fake.name()[:100].strip(),
+                    country=fake.country()[:100],
+                    birthday=fake.date_of_birth(minimum_age=18, maximum_age=90),
+                    passport=next_passport(),
+                )
+
+        chunked_bulk_create(Guest, gen(), label="Guest")
+        return list(Guest.objects.all().iterator(chunk_size=5000))
+
+    def _seed_reservations(self, count, room_types, rooms, guests):
         self.stdout.write(f"Reservation yaratilmoqda ({count} ta)...")
         today = timezone.now().date()
         statuses = [c[0] for c in Reservation.Status.choices]
         rooms_count = len(rooms)
+        guests_count = len(guests)
 
         def gen():
             for _ in range(count):
                 check_in = today + timedelta(days=random.randint(-10, 90))
                 check_out = check_in + timedelta(days=random.randint(1, 14))
                 yield Reservation(
-                    guest_name=fake.name()[:25].strip(),
+                    primary_guest=guests[random.randrange(guests_count)],
                     room_type=random.choice(room_types),
                     assigned_room=rooms[random.randrange(rooms_count)] if random.random() > 0.2 else None,
                     check_in_date=check_in,

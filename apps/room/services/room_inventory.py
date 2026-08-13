@@ -21,16 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class RoomInventoryService:
-    """Manage room inventory availability across date ranges.
-
-    Public methods:
-        - generate_inventory: Create inventory rows for a room type over
-          a date range. Idempotent — skips dates that already have rows.
-        - reserve_inventory: Decrement available count; raises
-          OverbookingError if insufficient stock.
-        - release_inventory: Increment available count on cancellation.
-    """
-
     @staticmethod
     @transaction.atomic
     def generate_for_date_range(
@@ -39,13 +29,6 @@ class RoomInventoryService:
         end_date: datetime.date,
         total_rooms: int,
     ) -> list[RoomInventory]:
-        """Generate RoomInventory records for a given date range.
-
-        Verifies that the room_type_id exists, then creates a RoomInventory
-        object for each date between start_date and end_date. Dates that
-        already have an inventory record are skipped (idempotent) — only
-        dates missing from existing_dates get a new record.
-        """
 
         RoomUtil.get_room_type(room_type_id)
         if end_date < start_date:
@@ -89,14 +72,6 @@ class RoomInventoryService:
             check_out_date: datetime.date,
             room_count: int,
     ) -> None:
-        """Reserve rooms for a date range by incrementing booked_rooms.
-
-        Locks the RoomInventory rows for the given room_type_id and date
-        range with select_for_update(), verifies that inventory exists for
-        every night in the range and that enough rooms are available on
-        each date, then atomically increments booked_rooms by
-        total_room_count for all matching rows.
-        """
         logger.info(
             "reserve_inventory start room_type_id=%s check_in_date=%s check_out_date=%s room_count=%s",
             room_type_id, check_in_date, check_out_date, room_count,
@@ -166,15 +141,6 @@ class RoomInventoryService:
         check_in_date: datetime.date,
         check_out_date: datetime.date,
     ) -> None:
-        """Release previously reserved rooms for a date range.
-
-            Locks the RoomInventory rows for the given room_type_id and date
-            range with select_for_update(), then decrements booked_rooms by
-            room_count for each row — but never below zero. Rows where
-            booked_rooms is already 0, or where fewer than room_count rooms
-            are booked, are clamped rather than skipped, so booked_rooms
-            never goes negative.
-        """
         logger.info(
             "release_inventory start room_type_id=%s check_in_date=%s check_out_date=%s",
             room_type_id, check_in_date, check_out_date,
@@ -215,12 +181,6 @@ class RoomInventoryService:
     @staticmethod
     @transaction.atomic
     def sync_total_rooms(room_type_id: int, date: datetime.date) -> RoomInventory:
-        """Sync a RoomInventory row's total_rooms with the actual Room count.
-
-        Locks (or creates, if missing) the RoomInventory row for the given
-        room_type_id and date, then updates total_rooms to match the current
-        count of Room objects for that room_type_id if they differ.
-        """
         actual_count = Room.objects.filter(room_type_id=room_type_id).count()
         row, _created = RoomInventory.objects.select_for_update().get_or_create(
             room_type_id=room_type_id,
@@ -256,7 +216,6 @@ class RoomInventoryService:
     @staticmethod
     @transaction.atomic
     def update_inventory(*, instance: RoomInventory, **validated_data) -> RoomInventory:
-        """RoomInventory yozuvini berilgan maydonlar bilan yangilaydi."""
         for field, value in validated_data.items():
             setattr(instance, field, value)
         instance.save(update_fields=list(validated_data.keys()) or None)
@@ -271,11 +230,6 @@ class RoomInventoryService:
             end_date: date,
             total_rooms: int,
     ) -> list[RoomInventory]:
-        """Sana oralig'i uchun ommaviy inventarizatsiya yaratadi (idempotent).
-
-        Allaqachon mavjud (date, room_type) juftliklari qayta yaratilmaydi —
-        `unique_inventory_per_date_room_type` constraint asosida filtrlanadi.
-        """
         target_dates = list(_date_range(start_date, end_date))
 
         existing_dates = set(

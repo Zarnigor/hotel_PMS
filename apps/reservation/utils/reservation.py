@@ -14,22 +14,19 @@ logger = logging.getLogger(__name__)
 
 _BASE_SELECT = """
     SELECT
-        r.id, r.guest_name, r.check_in_date, r.check_out_date,
+        r.id, r.check_in_date, r.check_out_date, r.guest_count,
         r.status, r.created_at,
+        g.id AS primary_guest__id, g.full_name AS primary_guest__full_name,
         rt.id AS room_type__id, rt.name AS room_type__name, rt.base_price AS room_type__base_price,
         room.id AS assigned_room__id, room.room_number AS assigned_room__number
     FROM reservations r
+    INNER JOIN guests g ON g.id = r.primary_guest_id
     INNER JOIN room_types rt ON rt.id = r.room_type_id
     LEFT JOIN rooms room ON room.id = r.assigned_room_id
 """
 
 
 def get_reservation(reservation_id: int) -> dict[str, Any]:
-    """ID bo'yicha bitta reservationni nested bilan qaytaradi.
-
-    Raises:
-        ReservationNotFoundError: Bunday ID topilmasa.
-    """
     logger.debug("get_reservation raw_sql reservation_id=%s", reservation_id)
     with connection.cursor() as cursor:
         cursor.execute(f"{_BASE_SELECT} WHERE r.id = %s", [reservation_id])
@@ -51,7 +48,6 @@ def list_reservations(
     limit: int = 20,
     offset: int = 0,
 ) -> dict[str, Any]:
-    """Filtrlar bo'yicha reservationlar ro'yxatini pagination bilan qaytaradi."""
     conditions = []
     params: list[Any] = []
     if room_type_id is not None:
